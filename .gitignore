@@ -1,4 +1,11 @@
 venv/
 __pycache__/
+.DS_Store
 *.pyc
 .env
+app_backup*.py
+app_before_stage_*.py
+ai_insights_backup.py
+ai_insights_before_stage_*.py
+README_before_premium.md
+requirements_full_backup.txt

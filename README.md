@@ -1,61 +1,101 @@
-# AI-Assisted Lead Qualification Scorer
+# AI Lead Qualification & Revenue Prioritization Platform
 
-A lightweight Python tool that helps business development teams prioritize
-which leads to chase first — using a transparent, configurable scoring model,
-with an optional layer that uses the Claude API to generate qualification
-briefs and localized outreach openers.
+A business-focused AI application that helps Business Development, Sales, Partnerships and GTM teams prioritize leads, identify revenue opportunities and generate account-specific outreach.
 
-## What it does
+This project demonstrates how AI can be applied to real commercial workflows: lead qualification, revenue prioritization, account intelligence, GTM planning and sales execution.
 
-1. Reads a CSV of leads (company, country, region, industry, estimated deal
-   size, engagement signal).
-2. Scores each lead from 0–100 based on four weighted factors:
-   - **Region priority** (e.g. LATAM / MENA focus markets)
-   - **Industry fit** (matches your target verticals)
-   - **Deal value** (relative size of the opportunity)
-   - **Engagement signal** (hot / warm / cold)
-3. Ranks leads into **A / B / C** priority tiers.
-4. *(Optional)* For the top N leads, calls Claude to generate:
-   - A 2-sentence rationale for why the lead is a priority
-   - A short outreach opening line, written in the lead's local language
-     (e.g. Portuguese for Brazil, Spanish for Mexico/Colombia/Argentina)
+---
 
-## How to run
+## Business Problem
 
-```bash
-pip install -r requirements.txt
-python lead_qualifier.py --input sample_leads.csv --output ranked_leads.csv --top 3
-```
+Commercial teams often waste time on low-priority accounts because raw lead lists are not properly scored, segmented or translated into clear next actions.
 
-To enable the AI enrichment step:
+This application turns a CSV pipeline into an AI-powered revenue prioritization workflow.
 
-```bash
-export ANTHROPIC_API_KEY="your-key-here"
-python lead_qualifier.py --top 3
-```
+---
 
-Without an API key, the script still runs end-to-end and produces the full
-ranked list — the AI step is additive, not required.
+## Solution
 
-## Customizing for your own pipeline
+The platform allows users to upload a CSV of leads and automatically generate lead scores, tier classification, executive pipeline insights, account intelligence, GTM recommendations, discovery questions, outreach sequences and exportable AI outputs.
 
-Everything that defines "what a good lead looks like" lives at the top of
-`lead_qualifier.py`:
+---
 
-- `WEIGHTS` — how much each factor matters (must sum to 1.0)
-- `REGION_SCORES`, `INDUSTRY_SCORES`, `ENGAGEMENT_SCORES` — your own ICP
-- `COUNTRY_LANGUAGE` — language used for the AI-generated outreach line
+## Key Features
 
-Swap `sample_leads.csv` for your own CRM export (same column names) and the
-scoring logic adapts immediately.
+- Lead Scoring
+- Tier Classification
+- Executive Account Dashboard
+- Multi-Lead Prioritization Engine
+- Lead Intelligence Workspace
+- AI Account Intelligence
+- AI Outreach Generation
+- Exportable Outputs
 
-## Example output
+---
 
-```
-=== Ranked Leads ===
-             company_name      country                   industry  score tier
-        Andina AgroExport     Colombia               Agribusiness   76.2    A
-Atlas Government Services Saudi Arabia Government / Public Sector   75.5    A
-      Gulf Trade Partners          UAE          Logistics & Trade   74.0    B
-    Pampa Energy Holdings    Argentina           Renewable Energy   70.0    B
-```
+## Tech Stack
+
+- Python
+- Streamlit
+- Pandas
+- Plotly
+- OpenAI SDK
+
+---
+
+## How To Run
+
+Install dependencies and run:
+
+    git clone https://github.com/Eambrosin/lead-qualification-scorer.git
+    cd lead-qualification-scorer
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    streamlit run app.py
+
+---
+
+## Sample CSV Format
+
+Required columns:
+
+- company_name
+- country
+- region
+- industry
+- estimated_deal_value_usd
+- engagement_signal
+
+---
+
+## Business Use Case
+
+This project simulates how a Business Development or GTM team could use AI to prioritize accounts, focus sales effort, identify high-value opportunities, prepare discovery conversations, generate personalized outreach and improve pipeline execution.
+
+---
+
+## Portfolio Positioning
+
+This is not a generic AI chatbot project.
+
+It is a business-focused AI application built to demonstrate practical use of AI in Business Development, Sales, Strategic Partnerships, Revenue Operations, GTM Strategy and Market Expansion.
+
+---
+
+## Future Improvements
+
+- HubSpot integration
+- Salesforce integration
+- Apollo or Clay enrichment workflow
+- CRM export format
+- Public Streamlit deployment
+- AI-powered territory planning
+
+---
+
+## Author
+
+Built by Eduardo Ambrosin as part of an AI portfolio focused on Business Development, Sales, Partnerships and GTM applications.
+
+GitHub: https://github.com/Eambrosin
