@@ -22,41 +22,45 @@ Commercial scores, tiers and prioritization are calculated using configurable bu
 
 ### Executive Commercial Intelligence
 
-![Executive Summary](screenshots/v2-executive-summary.png)
+<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-executive-summary.png" alt="Executive Commercial Intelligence Dashboard" width="100%">
 
-Configure the Ideal Customer Profile and scoring priorities before evaluating the commercial pipeline.
+Configure the Ideal Customer Profile, preferred company size and scoring priorities before evaluating the commercial pipeline.
 
 ---
 
 ### Executive Account Dashboard
 
-![Executive Account Dashboard](screenshots/v2-executive-dashboard.png)
+<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-executive-dashboard.png" alt="Executive Account Dashboard" width="100%">
 
-Identify the highest-value opportunities, fastest paths to revenue, expansion priorities and engagement risks.
+Identify the highest-value opportunities, fastest paths to revenue, strategic priorities, expansion opportunities and engagement risks.
 
 ---
 
-### Multi-Lead Prioritization
+### Multi-Lead Prioritization Engine
 
-![Multi-Lead Prioritization Engine](screenshots/v2-prioritization-engine.png)
+<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-prioritization-engine.png" alt="Multi-Lead Prioritization Engine" width="100%">
 
-Rank the commercial pipeline using the active ICP, transparent scoring logic and recommended next actions.
+Rank the commercial pipeline using the active ICP, transparent scoring logic, company-size fit and recommended commercial actions.
 
 ---
 
 ### Explainable Commercial Scoring
 
-![Explainable Score](screenshots/v2-explainable-score.png)
+<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-explainable-score.png" alt="Explainable Commercial Scoring" width="100%">
 
-Understand exactly how Region Fit, Industry Fit, Company Size Fit, Deal Value and Engagement contribute to the final score.
+Understand exactly how **Region Fit, Industry Fit, Company Size Fit, Deal Value and Engagement** contribute to the final commercial score.
 
 ---
 
 ### AI-Assisted Account Intelligence
 
-![AI Account Intelligence](screenshots/v2-ai-intelligence.png)
+<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-ai-intelligence.png" alt="AI-Assisted Account Intelligence" width="100%">
 
-Use deterministic qualification results as context for AI-assisted account interpretation, GTM recommendations and commercial next steps.
+Use deterministic qualification results as context for AI-assisted account interpretation, GTM recommendations, discovery questions and commercial next steps.
+
+---
+
+## Business Problem
 
 ---
 
