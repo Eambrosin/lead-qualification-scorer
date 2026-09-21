@@ -1,218 +1,4 @@
 """
-AI-Assisted Lead Qualification & Market Entry Scorer
------------------------------------------------------
-A small business-development tool that:
-
-1. Scores leads using a transparent, weighted scoring model
-   (region priority, industry fit, deal value, engagement level).
-2. Ranks leads into priority tiers (A / B / C).
-3. (Optional) Uses the Anthropic Claude API to generate, for the
-   top-ranked leads, a short qualification rationale AND a localized
-   outreach opening line written in the lead's likely language.
-
-Usage:
-    python lead_qualifier.py --input sample_leads.csv --output ranked_leads.csv --top 3
-
-The AI step is fully optional. Without an ANTHROPIC_API_KEY set, the
-script still runs end-to-end and produces the full ranked list using
-the rule-based score only.
-"""
-
-import argparse
-import os
-import json
-import pandas as pd
-import requests
-
-
-# ----------------------------------------------------------------------
-# 1. SCORING CONFIGURATION
-# Adjust these to match your own Ideal Customer Profile (ICP).
-# Weights must sum to 1.0
-# ----------------------------------------------------------------------
-
-WEIGHTS = {
-    "region": 0.25,
-    "industry": 0.20,
-    "deal_value": 0.30,
-    "engagement": 0.25,
-}
-
-REGION_SCORES = {
-    "LATAM": 100,
-    "MENA": 90,
-    "AFRICA": 70,
-    "EU": 60,
-    "NA": 50,
-    "APAC": 40,
-}
-
-INDUSTRY_SCORES = {
-    "Agribusiness": 100,
-    "Renewable Energy": 100,
-    "Government / Public Sector": 90,
-    "Fintech": 85,
-    "Real Estate": 80,
-    "Logistics & Trade": 70,
-    "Other": 30,
-}
-
-ENGAGEMENT_SCORES = {
-    "hot": 100,
-    "warm": 60,
-    "cold": 20,
-}
-
-# Language used for AI-generated outreach lines, based on country.
-# Falls back to English if the country isn't listed.
-COUNTRY_LANGUAGE = {
-    "Brazil": "Portuguese",
-    "Portugal": "Portuguese",
-    "Mexico": "Spanish",
-    "Colombia": "Spanish",
-    "Argentina": "Spanish",
-    "UAE": "English",
-    "Saudi Arabia": "English",
-    "Italy": "Italian",
-}
-
-
-def score_deal_value(value, max_value):
-    """Scale deal value to 0-100, relative to the largest deal in the batch."""
-    if max_value == 0:
-        return 0
-    return round((value / max_value) * 100, 1)
-
-
-def score_lead(row, max_deal_value):
-    region_score = REGION_SCORES.get(row["region"], 30)
-    industry_score = INDUSTRY_SCORES.get(row["industry"], 30)
-    deal_score = score_deal_value(row["estimated_deal_value_usd"], max_deal_value)
-    engagement_score = ENGAGEMENT_SCORES.get(str(row["engagement_signal"]).lower(), 20)
-
-    total = (
-        region_score * WEIGHTS["region"]
-        + industry_score * WEIGHTS["industry"]
-        + deal_score * WEIGHTS["deal_value"]
-        + engagement_score * WEIGHTS["engagement"]
-    )
-    return round(total, 1)
-
-
-def tier_for_score(score):
-    if score >= 75:
-        return "A"
-    if score >= 50:
-        return "B"
-    return "C"
-
-
-# ----------------------------------------------------------------------
-# 2. AI ENRICHMENT (optional — requires ANTHROPIC_API_KEY)
-# ----------------------------------------------------------------------
-
-# You can override the model via the ANTHROPIC_MODEL env var.
-# Check https://docs.claude.com for current model names.
-ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
-
-
-def generate_ai_brief(lead):
-    """
-    Calls the Anthropic API to generate:
-      - 'rationale': a 2-sentence explanation of why this lead is a priority
-      - 'opening_line': a short outreach opener in the lead's likely language
-
-    Returns None if no API key is configured or the call fails
-    (the rest of the pipeline keeps working either way).
-    """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return None
-
-    language = COUNTRY_LANGUAGE.get(lead["country"], "English")
-
-    prompt = (
-        "You are a business development analyst. Lead profile:\n"
-        f"- Company: {lead['company_name']}\n"
-        f"- Country: {lead['country']}\n"
-        f"- Industry: {lead['industry']}\n"
-        f"- Estimated deal value: USD {int(lead['estimated_deal_value_usd']):,}\n"
-        f"- Engagement signal: {lead['engagement_signal']}\n\n"
-        "Respond ONLY with valid JSON, no markdown, in this exact format:\n"
-        '{"rationale": "2 sentences in English on why this lead is a priority", '
-        f'"opening_line": "1 short outreach opening line written in {language}"}}'
-    )
-
-    try:
-        response = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": ANTHROPIC_MODEL,
-                "max_tokens": 300,
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            timeout=30,
-        )
-        response.raise_for_status()
-        text = response.json()["content"][0]["text"]
-        return json.loads(text)
-    except Exception as exc:
-        print(f"  [AI] Skipped for {lead['company_name']}: {exc}")
-        return None
-
-
-# ----------------------------------------------------------------------
-# 3. MAIN PIPELINE
-# ----------------------------------------------------------------------
-
-def main():
-    parser = argparse.ArgumentParser(description="AI-assisted lead qualification scorer")
-    parser.add_argument("--input", default="sample_leads.csv", help="Input CSV with leads")
-    parser.add_argument("--output", default="ranked_leads.csv", help="Output CSV with scores")
-    parser.add_argument("--top", type=int, default=3, help="Number of top leads to enrich with AI")
-    args = parser.parse_args()
-
-    df = pd.read_csv(args.input)
-
-    max_deal_value = df["estimated_deal_value_usd"].max()
-    df["score"] = df.apply(lambda row: score_lead(row, max_deal_value), axis=1)
-    df["tier"] = df["score"].apply(tier_for_score)
-    df = df.sort_values("score", ascending=False).reset_index(drop=True)
-
-    print("\n=== Ranked Leads ===")
-    print(df[["company_name", "country", "industry", "score", "tier"]].to_string(index=False))
-
-    has_api_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    df["ai_rationale"] = ""
-    df["ai_opening_line"] = ""
-
-    if has_api_key:
-        print(f"\n=== AI Enrichment (top {args.top} leads) ===")
-        for i in range(min(args.top, len(df))):
-            lead = df.iloc[i]
-            print(f"  -> {lead['company_name']} ({lead['country']})")
-            brief = generate_ai_brief(lead)
-            if brief:
-                df.at[i, "ai_rationale"] = brief.get("rationale", "")
-                df.at[i, "ai_opening_line"] = brief.get("opening_line", "")
-                print(f"     Rationale: {brief.get('rationale')}")
-                print(f"     Opening line: {brief.get('opening_line')}")
-    else:
-        print("\n[Info] ANTHROPIC_API_KEY not set - skipping AI enrichment step.")
-        print("       export ANTHROPIC_API_KEY='your-key' to generate outreach briefs.")
-
-    df.to_csv(args.output, index=False)
-    print(f"\nSaved full ranked list to: {args.output}")
-
-
-if __name__ == "__main__":
-    main()
-"""
 AI-Assisted Lead Qualification & Revenue Prioritization Engine
 --------------------------------------------------------------
 
@@ -220,31 +6,18 @@ A transparent commercial intelligence engine designed to:
 
 1. Score leads using a configurable weighted model.
 2. Compare leads against an Ideal Customer Profile (ICP).
-3. Rank opportunities into priority tiers (A / B / C).
-4. Explain how each component contributed to the final score.
-5. Recommend the next commercial action.
-6. Optionally use the Anthropic Claude API to generate:
+3. Evaluate company-size fit instead of assuming bigger is always better.
+4. Rank opportunities into priority tiers (A / B / C).
+5. Explain how each component contributed to the final score.
+6. Recommend the next commercial action.
+7. Optionally use the Anthropic Claude API to generate:
    - a short qualification rationale
    - a localized outreach opening line
 
-The rule-based scoring engine works independently from AI.
+The deterministic scoring engine works independently from AI.
 
 Without an ANTHROPIC_API_KEY, the full qualification and
 prioritization workflow continues to operate normally.
-
-Example usage:
-
-    python lead_qualifier.py \
-        --input sample_leads.csv \
-        --output ranked_leads.csv \
-        --top 3
-
-Optional custom configuration:
-
-    python lead_qualifier.py \
-        --input sample_leads.csv \
-        --output ranked_leads.csv \
-        --config scoring_config.json
 """
 
 import argparse
@@ -259,15 +32,12 @@ import requests
 # 1. DEFAULT COMMERCIAL SCORING CONFIGURATION
 # ----------------------------------------------------------------------
 
-# These defaults represent the baseline ICP.
-# They can later be overridden through a JSON configuration
-# or through the Streamlit interface.
-
 WEIGHTS = {
-    "region": 0.25,
+    "region": 0.20,
     "industry": 0.20,
-    "deal_value": 0.30,
-    "engagement": 0.25,
+    "company_size": 0.15,
+    "deal_value": 0.25,
+    "engagement": 0.20,
 }
 
 REGION_SCORES = {
@@ -293,6 +63,11 @@ ENGAGEMENT_SCORES = {
     "hot": 100,
     "warm": 60,
     "cold": 20,
+}
+
+COMPANY_SIZE_RANGE = {
+    "min": 50,
+    "max": 1000,
 }
 
 TIER_THRESHOLDS = {
@@ -311,9 +86,6 @@ REQUIRED_COLUMNS = {
     "engagement_signal",
 }
 
-
-# Language used for AI-generated outreach lines.
-# Falls back to English when the country is not mapped.
 
 COUNTRY_LANGUAGE = {
     "Brazil": "Portuguese",
@@ -335,16 +107,20 @@ COUNTRY_LANGUAGE = {
 # ----------------------------------------------------------------------
 
 def validate_weights(weights):
-    """
-    Ensure scoring weights are valid and sum to 1.0.
-    """
-    required = {"region", "industry", "deal_value", "engagement"}
+    required = {
+        "region",
+        "industry",
+        "company_size",
+        "deal_value",
+        "engagement",
+    }
 
     missing = required - set(weights.keys())
 
     if missing:
         raise ValueError(
-            f"Missing scoring weights: {', '.join(sorted(missing))}"
+            "Missing scoring weights: "
+            + ", ".join(sorted(missing))
         )
 
     for key, value in weights.items():
@@ -357,14 +133,12 @@ def validate_weights(weights):
 
     if abs(total - 1.0) > 0.001:
         raise ValueError(
-            f"Scoring weights must sum to 1.0. Current total: {total:.3f}"
+            f"Scoring weights must sum to 1.0. "
+            f"Current total: {total:.3f}"
         )
 
 
 def validate_tier_thresholds(thresholds):
-    """
-    Ensure tier thresholds follow A > B.
-    """
     if "A" not in thresholds or "B" not in thresholds:
         raise ValueError(
             "Tier thresholds must define both A and B."
@@ -376,39 +150,98 @@ def validate_tier_thresholds(thresholds):
         )
 
 
+def validate_company_size_range(size_range):
+    if "min" not in size_range or "max" not in size_range:
+        raise ValueError(
+            "Company size configuration must define min and max."
+        )
+
+    minimum = float(size_range["min"])
+    maximum = float(size_range["max"])
+
+    if minimum < 0:
+        raise ValueError(
+            "Minimum company size cannot be negative."
+        )
+
+    if maximum <= 0:
+        raise ValueError(
+            "Maximum company size must be greater than zero."
+        )
+
+    if minimum > maximum:
+        raise ValueError(
+            "Minimum company size cannot exceed maximum company size."
+        )
+
+
 def load_scoring_config(config_path=None):
-    """
-    Load the baseline scoring configuration.
-
-    If a JSON configuration file is supplied, its values override
-    the defaults while preserving unspecified baseline settings.
-    """
-
     config = {
         "weights": WEIGHTS.copy(),
         "region_scores": REGION_SCORES.copy(),
         "industry_scores": INDUSTRY_SCORES.copy(),
         "engagement_scores": ENGAGEMENT_SCORES.copy(),
+        "company_size_range": COMPANY_SIZE_RANGE.copy(),
         "tier_thresholds": TIER_THRESHOLDS.copy(),
     }
 
     if config_path:
-        with open(config_path, "r", encoding="utf-8") as file:
+        with open(
+            config_path,
+            "r",
+            encoding="utf-8",
+        ) as file:
             custom_config = json.load(file)
 
         for key in config:
             if key in custom_config:
-                if not isinstance(custom_config[key], dict):
+                if not isinstance(
+                    custom_config[key],
+                    dict,
+                ):
                     raise ValueError(
-                        f"Configuration section '{key}' must be an object."
+                        f"Configuration section '{key}' "
+                        "must be an object."
                     )
 
-                config[key].update(custom_config[key])
+                config[key].update(
+                    custom_config[key]
+                )
 
-    validate_weights(config["weights"])
-    validate_tier_thresholds(config["tier_thresholds"])
+    validate_weights(
+        config["weights"]
+    )
+
+    validate_tier_thresholds(
+        config["tier_thresholds"]
+    )
+
+    validate_company_size_range(
+        config["company_size_range"]
+    )
 
     return config
+
+
+def _effective_weights(config):
+    """
+    Support both the new five-factor scoring model and older
+    four-factor runtime configurations during migration.
+
+    If company_size is missing, it receives zero weight so the
+    previous Streamlit application continues to work until updated.
+    """
+
+    weights = config[
+        "weights"
+    ].copy()
+
+    weights.setdefault(
+        "company_size",
+        0.0,
+    )
+
+    return weights
 
 
 # ----------------------------------------------------------------------
@@ -416,67 +249,206 @@ def load_scoring_config(config_path=None):
 # ----------------------------------------------------------------------
 
 def validate_input_dataframe(df):
-    """
-    Validate that the lead dataset contains the required fields.
-    """
-
-    missing_columns = REQUIRED_COLUMNS - set(df.columns)
+    missing_columns = (
+        REQUIRED_COLUMNS
+        - set(df.columns)
+    )
 
     if missing_columns:
         raise ValueError(
             "Input CSV is missing required columns: "
-            + ", ".join(sorted(missing_columns))
+            + ", ".join(
+                sorted(
+                    missing_columns
+                )
+            )
         )
 
     if df.empty:
-        raise ValueError("Input CSV contains no leads.")
+        raise ValueError(
+            "Input CSV contains no leads."
+        )
 
-    if df["estimated_deal_value_usd"].isna().any():
+    if df[
+        "estimated_deal_value_usd"
+    ].isna().any():
         raise ValueError(
             "estimated_deal_value_usd contains missing values."
         )
 
-    if (df["estimated_deal_value_usd"] < 0).any():
+    if (
+        df[
+            "estimated_deal_value_usd"
+        ] < 0
+    ).any():
         raise ValueError(
             "estimated_deal_value_usd cannot contain negative values."
         )
 
+    if "company_size" in df.columns:
+        if (
+            pd.to_numeric(
+                df["company_size"],
+                errors="coerce",
+            ) < 0
+        ).any():
+            raise ValueError(
+                "company_size cannot contain negative values."
+            )
+
 
 # ----------------------------------------------------------------------
-# 4. SCORING ENGINE
+# 4. SCORING FUNCTIONS
 # ----------------------------------------------------------------------
 
-def score_deal_value(value, max_value):
+def score_deal_value(
+    value,
+    max_value,
+):
     """
-    Scale deal value to 0-100 relative to the largest deal
-    in the current opportunity set.
+    Scale deal value to 0-100 relative to the largest opportunity
+    in the current lead set.
     """
 
     if max_value <= 0:
         return 0.0
 
-    return round((float(value) / float(max_value)) * 100, 1)
+    return round(
+        (
+            float(value)
+            / float(max_value)
+        )
+        * 100,
+        1,
+    )
 
 
-def score_components(row, max_deal_value, config=None):
+def score_company_size(
+    value,
+    minimum,
+    maximum,
+):
     """
-    Calculate the complete scoring breakdown for one lead.
+    Score company size against the active ICP range.
 
-    Returns raw component scores, weighted contributions
-    and the final commercial score.
+    A company inside the preferred range receives 100.
+
+    Companies outside the range lose points progressively rather
+    than being rejected outright.
+
+    Examples for an ICP of 50-1000 employees:
+
+    50 employees   -> 100
+    500 employees  -> 100
+    1000 employees -> 100
+    40 employees   -> 80
+    1200 employees -> 83.3
+    2500 employees -> 40
+
+    This avoids assuming that a larger company is automatically
+    a better commercial fit.
+    """
+
+    try:
+        value = float(value)
+        minimum = float(minimum)
+        maximum = float(maximum)
+    except Exception:
+        return 50.0
+
+    if value < 0:
+        return 0.0
+
+    if minimum <= value <= maximum:
+        return 100.0
+
+    if value < minimum:
+        if minimum <= 0:
+            return 100.0
+
+        score = (
+            value
+            / minimum
+        ) * 100
+
+        return round(
+            max(
+                20.0,
+                min(
+                    score,
+                    100.0,
+                ),
+            ),
+            1,
+        )
+
+    if value > maximum:
+        if value == 0:
+            return 0.0
+
+        score = (
+            maximum
+            / value
+        ) * 100
+
+        return round(
+            max(
+                20.0,
+                min(
+                    score,
+                    100.0,
+                ),
+            ),
+            1,
+        )
+
+    return 50.0
+
+
+def score_components(
+    row,
+    max_deal_value,
+    config=None,
+):
+    """
+    Calculate the complete explainable scoring breakdown.
     """
 
     if config is None:
         config = load_scoring_config()
 
-    weights = config["weights"]
-    region_scores = config["region_scores"]
-    industry_scores = config["industry_scores"]
-    engagement_scores = config["engagement_scores"]
+    weights = _effective_weights(
+        config
+    )
 
-    region = str(row["region"]).strip()
-    industry = str(row["industry"]).strip()
-    engagement = str(row["engagement_signal"]).strip().lower()
+    region_scores = config[
+        "region_scores"
+    ]
+
+    industry_scores = config[
+        "industry_scores"
+    ]
+
+    engagement_scores = config[
+        "engagement_scores"
+    ]
+
+    company_size_range = config.get(
+        "company_size_range",
+        COMPANY_SIZE_RANGE,
+    )
+
+    region = str(
+        row["region"]
+    ).strip()
+
+    industry = str(
+        row["industry"]
+    ).strip()
+
+    engagement = str(
+        row["engagement_signal"]
+    ).strip().lower()
 
     region_score = region_scores.get(
         region,
@@ -489,7 +461,9 @@ def score_components(row, max_deal_value, config=None):
     )
 
     deal_value_score = score_deal_value(
-        row["estimated_deal_value_usd"],
+        row[
+            "estimated_deal_value_usd"
+        ],
         max_deal_value,
     )
 
@@ -498,20 +472,71 @@ def score_components(row, max_deal_value, config=None):
         20,
     )
 
+    if "company_size" in row.index:
+        company_size_value = row[
+            "company_size"
+        ]
+    else:
+        company_size_value = None
+
+    if (
+        company_size_value is None
+        or pd.isna(company_size_value)
+    ):
+        company_size_score = 50.0
+
+    else:
+        company_size_score = (
+            score_company_size(
+                company_size_value,
+                company_size_range[
+                    "min"
+                ],
+                company_size_range[
+                    "max"
+                ],
+            )
+        )
+
     raw_scores = {
-        "region": round(float(region_score), 1),
-        "industry": round(float(industry_score), 1),
-        "deal_value": round(float(deal_value_score), 1),
-        "engagement": round(float(engagement_score), 1),
+        "region": round(
+            float(region_score),
+            1,
+        ),
+        "industry": round(
+            float(industry_score),
+            1,
+        ),
+        "company_size": round(
+            float(company_size_score),
+            1,
+        ),
+        "deal_value": round(
+            float(deal_value_score),
+            1,
+        ),
+        "engagement": round(
+            float(engagement_score),
+            1,
+        ),
     }
 
     weighted_contributions = {
-        key: round(raw_scores[key] * weights[key], 1)
+        key: round(
+            raw_scores[key]
+            * weights.get(
+                key,
+                0.0,
+            ),
+            1,
+        )
         for key in raw_scores
     }
 
     total_score = round(
-        sum(weighted_contributions.values()),
+        sum(
+            weighted_contributions.values()
+        ),
         1,
     )
 
@@ -519,76 +544,105 @@ def score_components(row, max_deal_value, config=None):
         "raw_scores": raw_scores,
         "weighted_contributions": weighted_contributions,
         "total_score": total_score,
+        "company_size_range": {
+            "min": company_size_range[
+                "min"
+            ],
+            "max": company_size_range[
+                "max"
+            ],
+        },
     }
 
 
-def score_lead(row, max_deal_value, config=None):
-    """
-    Return the final commercial score for a lead.
-
-    This function intentionally keeps the original interface
-    compatible with existing code.
-    """
-
+def score_lead(
+    row,
+    max_deal_value,
+    config=None,
+):
     details = score_components(
         row,
         max_deal_value,
         config=config,
     )
 
-    return details["total_score"]
+    return details[
+        "total_score"
+    ]
 
 
-def tier_for_score(score, thresholds=None):
-    """
-    Convert a commercial score into a priority tier.
-    """
-
+def tier_for_score(
+    score,
+    thresholds=None,
+):
     if thresholds is None:
-        thresholds = TIER_THRESHOLDS
+        thresholds = (
+            TIER_THRESHOLDS
+        )
 
-    if score >= thresholds["A"]:
+    if score >= thresholds[
+        "A"
+    ]:
         return "A"
 
-    if score >= thresholds["B"]:
+    if score >= thresholds[
+        "B"
+    ]:
         return "B"
 
     return "C"
 
 
-def recommended_action(score, tier, engagement_signal):
-    """
-    Translate qualification results into a practical
-    Business Development recommendation.
-    """
-
-    engagement = str(engagement_signal).strip().lower()
+def recommended_action(
+    score,
+    tier,
+    engagement_signal,
+):
+    engagement = str(
+        engagement_signal
+    ).strip().lower()
 
     if tier == "A":
-        if engagement in {"hot", "warm"}:
-            return "Immediate personalized outreach"
-        return "High-priority outreach with account research"
+
+        if engagement in {
+            "hot",
+            "warm",
+        }:
+            return (
+                "Immediate personalized outreach"
+            )
+
+        return (
+            "High-priority outreach with account research"
+        )
 
     if tier == "B":
+
         if engagement == "hot":
-            return "Priority follow-up and qualification"
-        return "Nurture and continue qualification"
+            return (
+                "Priority follow-up and qualification"
+            )
+
+        return (
+            "Nurture and continue qualification"
+        )
 
     if engagement == "hot":
-        return "Validate strategic fit before allocating resources"
+        return (
+            "Validate strategic fit before allocating resources"
+        )
 
     return "Low-priority nurture"
 
 
-def build_score_rationale(details, weights):
-    """
-    Produce a transparent explanation of how the score
-    was calculated.
-    """
-
+def build_score_rationale(
+    details,
+    weights,
+):
     labels = {
         "region": "Region Fit",
         "industry": "Industry Fit",
+        "company_size": "Company Size Fit",
         "deal_value": "Deal Value",
         "engagement": "Engagement",
     }
@@ -598,40 +652,67 @@ def build_score_rationale(details, weights):
     for key in [
         "region",
         "industry",
+        "company_size",
         "deal_value",
         "engagement",
     ]:
-        raw_score = details["raw_scores"][key]
-        contribution = details["weighted_contributions"][key]
-        weight_percent = int(round(weights[key] * 100))
 
-        parts.append(
-            f"{labels[key]}: {raw_score:.1f}/100 "
-            f"× {weight_percent}% = {contribution:.1f}"
+        raw_score = details[
+            "raw_scores"
+        ][key]
+
+        contribution = details[
+            "weighted_contributions"
+        ][key]
+
+        weight_percent = int(
+            round(
+                weights.get(
+                    key,
+                    0.0,
+                )
+                * 100
+            )
         )
 
-    return " | ".join(parts)
+        parts.append(
+            f"{labels[key]}: "
+            f"{raw_score:.1f}/100 "
+            f"× {weight_percent}% "
+            f"= {contribution:.1f}"
+        )
+
+    return " | ".join(
+        parts
+    )
 
 
-def rank_leads(df, config=None):
+def rank_leads(
+    df,
+    config=None,
+):
     """
-    Rank an entire lead dataframe and add:
-
-    - commercial score
-    - priority tier
-    - recommended action
-    - explainable scoring rationale
-    - machine-readable score breakdown
+    Rank the complete pipeline and add transparent commercial outputs.
     """
 
     if config is None:
-        config = load_scoring_config()
+        config = (
+            load_scoring_config()
+        )
 
-    validate_input_dataframe(df)
+    validate_input_dataframe(
+        df
+    )
 
     ranked = df.copy()
 
-    max_deal_value = ranked["estimated_deal_value_usd"].max()
+    max_deal_value = ranked[
+        "estimated_deal_value_usd"
+    ].max()
+
+    weights = _effective_weights(
+        config
+    )
 
     scores = []
     tiers = []
@@ -647,28 +728,49 @@ def rank_leads(df, config=None):
             config=config,
         )
 
-        score = details["total_score"]
+        score = details[
+            "total_score"
+        ]
 
         tier = tier_for_score(
             score,
-            config["tier_thresholds"],
+            config[
+                "tier_thresholds"
+            ],
         )
 
-        action = recommended_action(
-            score,
-            tier,
-            row["engagement_signal"],
+        action = (
+            recommended_action(
+                score,
+                tier,
+                row[
+                    "engagement_signal"
+                ],
+            )
         )
 
-        rationale = build_score_rationale(
-            details,
-            config["weights"],
+        rationale = (
+            build_score_rationale(
+                details,
+                weights,
+            )
         )
 
-        scores.append(score)
-        tiers.append(tier)
-        recommendations.append(action)
-        rationales.append(rationale)
+        scores.append(
+            score
+        )
+
+        tiers.append(
+            tier
+        )
+
+        recommendations.append(
+            action
+        )
+
+        rationales.append(
+            rationale
+        )
 
         breakdowns.append(
             json.dumps(
@@ -677,28 +779,42 @@ def rank_leads(df, config=None):
             )
         )
 
-    ranked["score"] = scores
-    ranked["tier"] = tiers
-    ranked["recommended_action"] = recommendations
-    ranked["score_rationale"] = rationales
-    ranked["score_breakdown"] = breakdowns
+    ranked[
+        "score"
+    ] = scores
 
-    ranked = ranked.sort_values(
-        "score",
-        ascending=False,
-    ).reset_index(drop=True)
+    ranked[
+        "tier"
+    ] = tiers
+
+    ranked[
+        "recommended_action"
+    ] = recommendations
+
+    ranked[
+        "score_rationale"
+    ] = rationales
+
+    ranked[
+        "score_breakdown"
+    ] = breakdowns
+
+    ranked = (
+        ranked.sort_values(
+            "score",
+            ascending=False,
+        )
+        .reset_index(
+            drop=True
+        )
+    )
 
     return ranked
 
 
 # ----------------------------------------------------------------------
-# 5. AI ENRICHMENT
+# 5. OPTIONAL ANTHROPIC ENRICHMENT
 # ----------------------------------------------------------------------
-
-# Environment variable override remains available.
-#
-# Example:
-# export ANTHROPIC_MODEL="claude-sonnet-5"
 
 ANTHROPIC_MODEL = os.environ.get(
     "ANTHROPIC_MODEL",
@@ -706,74 +822,62 @@ ANTHROPIC_MODEL = os.environ.get(
 )
 
 
-def generate_ai_brief(lead):
+def generate_ai_brief(
+    lead,
+):
     """
-    Generate optional qualitative enrichment for a lead.
+    Optional CLI enrichment.
 
-    Claude receives the deterministic commercial score and
-    recommendation rather than replacing the scoring model.
-
-    Returns:
-        {
-            "rationale": "...",
-            "opening_line": "..."
-        }
-
-    Returns None when no API key is available or when
-    the API request fails.
+    The deterministic commercial score remains the source of truth.
     """
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get(
+        "ANTHROPIC_API_KEY"
+    )
 
     if not api_key:
         return None
 
-    country = str(lead.get("country", "")).strip()
-
     language = COUNTRY_LANGUAGE.get(
-        country,
+        lead[
+            "country"
+        ],
         "English",
     )
 
-    score = lead.get("score", "N/A")
-    tier = lead.get("tier", "N/A")
-    action = lead.get(
-        "recommended_action",
-        "N/A",
-    )
-
-    score_rationale = lead.get(
-        "score_rationale",
-        "Not available",
+    company_size = lead.get(
+        "company_size",
+        "Not provided",
     )
 
     prompt = (
         "You are a business development analyst.\n\n"
-        "The deterministic commercial scoring engine has already "
-        "evaluated this opportunity. Do not invent a new score.\n\n"
+        "The deterministic commercial scoring engine has "
+        "already evaluated this opportunity. "
+        "Do not invent or change the score.\n\n"
         "Lead profile:\n"
         f"- Company: {lead['company_name']}\n"
         f"- Country: {lead['country']}\n"
         f"- Region: {lead['region']}\n"
         f"- Industry: {lead['industry']}\n"
+        f"- Company size: {company_size} employees\n"
         f"- Estimated deal value: USD "
         f"{int(lead['estimated_deal_value_usd']):,}\n"
         f"- Engagement signal: {lead['engagement_signal']}\n"
-        f"- Commercial score: {score}/100\n"
-        f"- Priority tier: {tier}\n"
-        f"- Recommended action: {action}\n"
-        f"- Score rationale: {score_rationale}\n\n"
-        "Your role is to add qualitative commercial context "
-        "to the deterministic result.\n\n"
-        "Respond ONLY with valid JSON. "
-        "Do not use markdown or code fences.\n\n"
-        "Use exactly this format:\n"
+        f"- Commercial score: {lead.get('score', 'N/A')}/100\n"
+        f"- Priority tier: {lead.get('tier', 'N/A')}\n"
+        f"- Recommended action: "
+        f"{lead.get('recommended_action', 'N/A')}\n"
+        f"- Score rationale: "
+        f"{lead.get('score_rationale', 'N/A')}\n\n"
+        "Respond ONLY with valid JSON.\n"
         "{"
         '"rationale": '
-        '"2 concise sentences in English explaining the commercial '
-        'priority without changing the deterministic score", '
+        '"2 concise sentences in English explaining the '
+        'commercial priority without changing the score", '
         '"opening_line": '
-        f'"1 short personalized outreach opening line in {language}"'
+        f'"1 short personalized outreach opening line '
+        f'written in {language}"'
         "}"
     )
 
@@ -803,16 +907,23 @@ def generate_ai_brief(lead):
 
         response.raise_for_status()
 
-        response_data = response.json()
+        response_data = (
+            response.json()
+        )
 
         text_block = next(
             (
-                block.get("text")
+                block.get(
+                    "text"
+                )
                 for block in response_data.get(
                     "content",
                     [],
                 )
-                if block.get("type") == "text"
+                if block.get(
+                    "type"
+                )
+                == "text"
             ),
             None,
         )
@@ -822,29 +933,44 @@ def generate_ai_brief(lead):
                 "Anthropic response did not contain a text block."
             )
 
-        clean_text = text_block.strip()
+        clean_text = (
+            text_block.strip()
+        )
 
-        # Defensive cleanup in case the model unexpectedly
-        # returns JSON inside markdown code fences.
-        if clean_text.startswith("```"):
-            clean_text = clean_text.strip("`")
+        if clean_text.startswith(
+            "```"
+        ):
+            clean_text = (
+                clean_text.strip(
+                    "`"
+                )
+            )
 
-            if clean_text.startswith("json"):
-                clean_text = clean_text[4:].strip()
+            if clean_text.startswith(
+                "json"
+            ):
+                clean_text = (
+                    clean_text[
+                        4:
+                    ].strip()
+                )
 
-        return json.loads(clean_text)
+        return json.loads(
+            clean_text
+        )
 
     except Exception as exc:
         print(
             f"  [AI] Skipped for "
-            f"{lead['company_name']}: {exc}"
+            f"{lead['company_name']}: "
+            f"{exc}"
         )
 
         return None
 
 
 # ----------------------------------------------------------------------
-# 6. MAIN PIPELINE
+# 6. CLI PIPELINE
 # ----------------------------------------------------------------------
 
 def main():
@@ -858,14 +984,22 @@ def main():
 
     parser.add_argument(
         "--input",
-        default="sample_leads.csv",
-        help="Input CSV containing lead data",
+        default=(
+            "data/sample_leads.csv"
+        ),
+        help=(
+            "Input CSV containing lead data"
+        ),
     )
 
     parser.add_argument(
         "--output",
-        default="ranked_leads.csv",
-        help="Output CSV containing qualification results",
+        default=(
+            "exports/ranked_leads.csv"
+        ),
+        help=(
+            "Output CSV containing qualification results"
+        ),
     )
 
     parser.add_argument(
@@ -889,8 +1023,10 @@ def main():
 
     args = parser.parse_args()
 
-    config = load_scoring_config(
-        args.config
+    config = (
+        load_scoring_config(
+            args.config
+        )
     )
 
     df = pd.read_csv(
@@ -902,23 +1038,44 @@ def main():
         config=config,
     )
 
-    print("\n=== Ranked Leads ===")
+    print(
+        "\n=== Ranked Leads ==="
+    )
+
+    display_columns = [
+        "company_name",
+        "country",
+        "industry",
+    ]
+
+    if "company_size" in ranked_df.columns:
+        display_columns.append(
+            "company_size"
+        )
+
+    display_columns.extend(
+        [
+            "score",
+            "tier",
+            "recommended_action",
+        ]
+    )
 
     print(
         ranked_df[
-            [
-                "company_name",
-                "country",
-                "industry",
-                "score",
-                "tier",
-                "recommended_action",
-            ]
-        ].to_string(index=False)
+            display_columns
+        ].to_string(
+            index=False
+        )
     )
 
-    ranked_df["ai_rationale"] = ""
-    ranked_df["ai_opening_line"] = ""
+    ranked_df[
+        "ai_rationale"
+    ] = ""
+
+    ranked_df[
+        "ai_opening_line"
+    ] = ""
 
     has_api_key = bool(
         os.environ.get(
@@ -936,20 +1093,20 @@ def main():
         for i in range(
             min(
                 args.top,
-                len(ranked_df),
+                len(
+                    ranked_df
+                ),
             )
         ):
 
-            lead = ranked_df.iloc[i]
-
-            print(
-                f"  -> "
-                f"{lead['company_name']} "
-                f"({lead['country']})"
+            lead = (
+                ranked_df.iloc[i]
             )
 
-            brief = generate_ai_brief(
-                lead
+            brief = (
+                generate_ai_brief(
+                    lead
+                )
             )
 
             if brief:
@@ -970,26 +1127,21 @@ def main():
                     "",
                 )
 
-                print(
-                    "     Rationale: "
-                    f"{brief.get('rationale')}"
-                )
-
-                print(
-                    "     Opening line: "
-                    f"{brief.get('opening_line')}"
-                )
-
     else:
 
         print(
-            "\n[Info] ANTHROPIC_API_KEY "
-            "not set - skipping AI enrichment."
+            "\n[Info] ANTHROPIC_API_KEY not set "
+            "- skipping optional CLI AI enrichment."
         )
 
-        print(
-            "       The deterministic "
-            "qualification engine remains fully operational."
+    output_directory = os.path.dirname(
+        args.output
+    )
+
+    if output_directory:
+        os.makedirs(
+            output_directory,
+            exist_ok=True,
         )
 
     ranked_df.to_csv(
