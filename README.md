@@ -18,6 +18,48 @@ Commercial scores, tiers and prioritization are calculated using configurable bu
 
 ---
 
+## Product Preview
+
+### Executive Commercial Intelligence
+
+![Executive Summary](screenshots/v2-executive-summary.png)
+
+Configure the Ideal Customer Profile and scoring priorities before evaluating the commercial pipeline.
+
+---
+
+### Executive Account Dashboard
+
+![Executive Account Dashboard](screenshots/v2-executive-dashboard.png)
+
+Identify the highest-value opportunities, fastest paths to revenue, expansion priorities and engagement risks.
+
+---
+
+### Multi-Lead Prioritization
+
+![Multi-Lead Prioritization Engine](screenshots/v2-prioritization-engine.png)
+
+Rank the commercial pipeline using the active ICP, transparent scoring logic and recommended next actions.
+
+---
+
+### Explainable Commercial Scoring
+
+![Explainable Score](screenshots/v2-explainable-score.png)
+
+Understand exactly how Region Fit, Industry Fit, Company Size Fit, Deal Value and Engagement contribute to the final score.
+
+---
+
+### AI-Assisted Account Intelligence
+
+![AI Account Intelligence](screenshots/v2-ai-intelligence.png)
+
+Use deterministic qualification results as context for AI-assisted account interpretation, GTM recommendations and commercial next steps.
+
+---
+
 ## Business Problem
 
 Commercial teams frequently manage more accounts and opportunities than they can effectively pursue.
