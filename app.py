@@ -1,3 +1,4 @@
+import html
 import json
 import os
 from pathlib import Path
@@ -7,39 +8,125 @@ import plotly.express as px
 import streamlit as st
 
 from ai_insights import generate_ai_insight, generate_outreach
-from lead_qualifier import (
-    ENGAGEMENT_SCORES,
-    INDUSTRY_SCORES,
-    REGION_SCORES,
-    TIER_THRESHOLDS,
-    WEIGHTS,
-    load_scoring_config,
-    rank_leads,
-)
+from lead_qualifier import load_scoring_config, rank_leads
 
-
-# ----------------------------------------------------------------------
-# PAGE CONFIGURATION
-# ----------------------------------------------------------------------
 
 st.set_page_config(
-    page_title="AI Lead Qualification Dashboard",
+    page_title="AI Lead Qualification & Revenue Prioritization",
     page_icon="🚀",
     layout="wide",
 )
 
-PLOTLY_CONFIG = {
-    "displayModeBar": False,
-    "responsive": True,
-}
-
+PLOTLY_CONFIG = {"displayModeBar": False, "responsive": True}
 EXPORTS_DIR = Path("exports")
 EXPORTS_DIR.mkdir(exist_ok=True)
 
+BASE_CONFIG = load_scoring_config()
 
-# ----------------------------------------------------------------------
-# HELPERS
-# ----------------------------------------------------------------------
+
+def build_runtime_config(
+    preferred_regions,
+    preferred_industries,
+    minimum_company_size,
+    maximum_company_size,
+    region_priority,
+    industry_priority,
+    company_size_priority,
+    deal_value_priority,
+    engagement_priority,
+    tier_a_threshold,
+    tier_b_threshold,
+):
+    """Build a runtime ICP/scoring configuration from Streamlit controls."""
+
+    config = {
+        "weights": BASE_CONFIG["weights"].copy(),
+        "region_scores": BASE_CONFIG["region_scores"].copy(),
+        "industry_scores": BASE_CONFIG["industry_scores"].copy(),
+        "engagement_scores": BASE_CONFIG["engagement_scores"].copy(),
+        "company_size_range": BASE_CONFIG["company_size_range"].copy(),
+        "tier_thresholds": BASE_CONFIG["tier_thresholds"].copy(),
+    }
+
+    if minimum_company_size > maximum_company_size:
+        raise ValueError(
+            "Minimum company size cannot exceed maximum company size."
+        )
+
+    config["company_size_range"] = {
+        "min": float(minimum_company_size),
+        "max": float(maximum_company_size),
+    }
+
+    raw_priorities = {
+        "region": float(region_priority),
+        "industry": float(industry_priority),
+        "company_size": float(company_size_priority),
+        "deal_value": float(deal_value_priority),
+        "engagement": float(engagement_priority),
+    }
+
+    total_priority = sum(raw_priorities.values())
+
+    if total_priority <= 0:
+        raise ValueError(
+            "At least one scoring priority must be greater than zero."
+        )
+
+    config["weights"] = {
+        key: value / total_priority
+        for key, value in raw_priorities.items()
+    }
+
+    for region in preferred_regions:
+        config["region_scores"][region] = 100
+
+    for industry in preferred_industries:
+        config["industry_scores"][industry] = 100
+
+    if tier_a_threshold <= tier_b_threshold:
+        raise ValueError(
+            "Tier A threshold must be higher than Tier B threshold."
+        )
+
+    config["tier_thresholds"] = {
+        "A": float(tier_a_threshold),
+        "B": float(tier_b_threshold),
+    }
+
+    return config
+
+
+def prepare_lead_for_ai(
+    row,
+    runtime_config,
+    preferred_regions,
+    preferred_industries,
+):
+    """Prepare deterministic commercial context for the AI layer."""
+
+    company_size = row.get("company_size", "")
+
+    return {
+        "company": row["company_name"],
+        "country": row["country"],
+        "region": row["region"],
+        "industry": row["industry"],
+        "company_size": company_size,
+        "deal_value": row["estimated_deal_value_usd"],
+        "engagement_signal": row["engagement_signal"],
+        "score": row["score"],
+        "tier": row["tier"],
+        "recommended_action": row.get("recommended_action", ""),
+        "score_rationale": row.get("score_rationale", ""),
+        "score_breakdown": row.get("score_breakdown", ""),
+        "priority_regions": list(preferred_regions),
+        "priority_industries": list(preferred_industries),
+        "company_size_range": runtime_config["company_size_range"],
+        "scoring_weights": runtime_config["weights"],
+        "tier_thresholds": runtime_config["tier_thresholds"],
+    }
+
 
 def safe_filename(value):
     return (
@@ -52,85 +139,20 @@ def safe_filename(value):
     )
 
 
-def save_ai_output(
-    company_name,
-    output_type,
-    content,
-):
-    filename = (
-        f"{safe_filename(company_name)}_"
-        f"{output_type}.txt"
-    )
-
+def save_ai_output(company_name, output_type, content):
+    filename = f"{safe_filename(company_name)}_{output_type}.txt"
     path = EXPORTS_DIR / filename
-
-    path.write_text(
-        content,
-        encoding="utf-8",
-    )
-
+    path.write_text(content, encoding="utf-8")
     return path
 
 
-def prepare_lead_for_ai(
-    row,
-    runtime_config,
-    preferred_regions,
-    preferred_industries,
-):
-    """
-    Prepare deterministic commercial context
-    for the AI intelligence layer.
-    """
-
-    return {
-        "company": row["company_name"],
-        "country": row["country"],
-        "region": row["region"],
-        "industry": row["industry"],
-        "deal_value": row[
-            "estimated_deal_value_usd"
-        ],
-        "engagement_signal": row[
-            "engagement_signal"
-        ],
-        "score": row["score"],
-        "tier": row["tier"],
-        "recommended_action": row.get(
-            "recommended_action",
-            "",
-        ),
-        "score_rationale": row.get(
-            "score_rationale",
-            "",
-        ),
-        "score_breakdown": row.get(
-            "score_breakdown",
-            "",
-        ),
-        "priority_regions": list(
-            preferred_regions
-        ),
-        "priority_industries": list(
-            preferred_industries
-        ),
-        "scoring_weights": runtime_config[
-            "weights"
-        ],
-        "tier_thresholds": runtime_config[
-            "tier_thresholds"
-        ],
-    }
-
-
-def render_ai_output(
-    title,
-    content,
-    icon="📌",
-):
-    cleaned_content = str(
-        content
-    ).strip()
+def render_ai_output(title, content, icon="📌"):
+    cleaned_content = html.escape(
+        str(content).strip()
+    ).replace(
+        "\n",
+        "<br>",
+    )
 
     st.markdown(
         f"### {icon} {title}"
@@ -170,7 +192,6 @@ def split_sections(text):
     ]
 
     sections = {}
-
     current_title = None
     current_lines = []
 
@@ -178,19 +199,14 @@ def split_sections(text):
         stripped = line.strip()
 
         if stripped in section_titles:
-
             if current_title:
-                sections[
-                    current_title
-                ] = "\n".join(
+                sections[current_title] = "\n".join(
                     current_lines
                 ).strip()
 
-            current_title = (
-                stripped.replace(
-                    ":",
-                    "",
-                )
+            current_title = stripped.replace(
+                ":",
+                "",
             )
 
             current_lines = []
@@ -201,9 +217,7 @@ def split_sections(text):
             )
 
     if current_title:
-        sections[
-            current_title
-        ] = "\n".join(
+        sections[current_title] = "\n".join(
             current_lines
         ).strip()
 
@@ -236,45 +250,35 @@ def render_structured_ai_result(
     if "Opportunity Assessment" in sections:
         render_ai_output(
             "Opportunity Assessment",
-            sections[
-                "Opportunity Assessment"
-            ],
+            sections["Opportunity Assessment"],
             "🎯",
         )
 
     if "Score Interpretation" in sections:
         render_ai_output(
             "Score Interpretation",
-            sections[
-                "Score Interpretation"
-            ],
+            sections["Score Interpretation"],
             "🔎",
         )
 
     if "Recommended GTM Angle" in sections:
         render_ai_output(
             "Recommended GTM Angle",
-            sections[
-                "Recommended GTM Angle"
-            ],
+            sections["Recommended GTM Angle"],
             "🧭",
         )
 
     if "Opportunity Hypothesis" in sections:
         render_ai_output(
             "Opportunity Hypothesis",
-            sections[
-                "Opportunity Hypothesis"
-            ],
+            sections["Opportunity Hypothesis"],
             "🎯",
         )
 
     if "Email Subject" in sections:
         render_ai_output(
             "Email Subject",
-            sections[
-                "Email Subject"
-            ],
+            sections["Email Subject"],
             "✉️",
         )
 
@@ -288,208 +292,134 @@ def render_structured_ai_result(
     if "LinkedIn Message" in sections:
         render_ai_output(
             "LinkedIn Message",
-            sections[
-                "LinkedIn Message"
-            ],
+            sections["LinkedIn Message"],
             "💼",
         )
 
     if "Call Opener" in sections:
         render_ai_output(
             "Call Opener",
-            sections[
-                "Call Opener"
-            ],
+            sections["Call Opener"],
             "📞",
         )
 
     if "Discovery Questions" in sections:
         render_ai_output(
             "Discovery Questions",
-            sections[
-                "Discovery Questions"
-            ],
+            sections["Discovery Questions"],
             "❓",
         )
 
     if "Recommended Next Step" in sections:
         render_ai_output(
             "Recommended Next Step",
-            sections[
-                "Recommended Next Step"
-            ],
+            sections["Recommended Next Step"],
             "🚀",
         )
 
     if "Next Best Action" in sections:
         render_ai_output(
             "Next Best Action",
-            sections[
-                "Next Best Action"
-            ],
+            sections["Next Best Action"],
             "🚀",
         )
 
 
-def normalized_weights(
-    region,
-    industry,
-    deal_value,
-    engagement,
+def priority_reason(
+    row,
+    high_value_threshold,
 ):
-    raw = {
-        "region": region,
-        "industry": industry,
-        "deal_value": deal_value,
-        "engagement": engagement,
-    }
+    reasons = []
 
-    total = sum(
-        raw.values()
-    )
-
-    if total <= 0:
-        return WEIGHTS.copy()
-
-    return {
-        key: value / total
-        for key, value in raw.items()
-    }
-
-
-def build_runtime_config(
-    preferred_regions,
-    preferred_industries,
-    weights,
-    tier_a_threshold,
-    tier_b_threshold,
-):
-    config = load_scoring_config()
-
-    config["weights"] = (
-        weights.copy()
-    )
-
-    config[
-        "tier_thresholds"
-    ] = {
-        "A": tier_a_threshold,
-        "B": tier_b_threshold,
-    }
-
-    region_scores = {
-        region: (
-            100
-            if region
-            in preferred_regions
-            else 40
-        )
-        for region
-        in REGION_SCORES
-    }
-
-    industry_scores = {
-        industry: (
-            100
-            if industry
-            in preferred_industries
-            else 40
-        )
-        for industry
-        in INDUSTRY_SCORES
-    }
-
-    config[
-        "region_scores"
-    ].update(
-        region_scores
-    )
-
-    config[
-        "industry_scores"
-    ].update(
-        industry_scores
-    )
-
-    config[
-        "engagement_scores"
-    ] = (
-        ENGAGEMENT_SCORES.copy()
-    )
-
-    return config
-
-
-def format_score_breakdown(
-    score_breakdown,
-    weights,
-):
-    try:
-        details = json.loads(
-            score_breakdown
-        )
-    except Exception:
-        return pd.DataFrame()
-
-    labels = {
-        "region": "Region Fit",
-        "industry": "Industry Fit",
-        "deal_value": "Deal Value",
-        "engagement": "Engagement",
-    }
-
-    rows = []
-
-    for key in [
-        "region",
-        "industry",
-        "deal_value",
-        "engagement",
-    ]:
-
-        rows.append(
-            {
-                "Component": labels[key],
-                "Raw Score": details[
-                    "raw_scores"
-                ].get(
-                    key,
-                    0,
-                ),
-                "Weight": (
-                    f"{weights[key] * 100:.0f}%"
-                ),
-                "Weighted Contribution": details[
-                    "weighted_contributions"
-                ].get(
-                    key,
-                    0,
-                ),
-            }
+    if row["tier"] == "A":
+        reasons.append(
+            "Tier A account"
         )
 
-    return pd.DataFrame(
-        rows
+    elif row["tier"] == "B":
+        reasons.append(
+            "Tier B account"
+        )
+
+    else:
+        reasons.append(
+            "lower-priority account"
+        )
+
+    engagement = str(
+        row["engagement_signal"]
+    ).lower()
+
+    if engagement == "hot":
+        reasons.append(
+            "hot engagement signal"
+        )
+
+    elif engagement == "warm":
+        reasons.append(
+            "warm engagement signal"
+        )
+
+    if (
+        row["estimated_deal_value_usd"]
+        >= high_value_threshold
+    ):
+        reasons.append(
+            "high estimated deal value"
+        )
+
+    return (
+        ", ".join(reasons).capitalize()
+        + "."
     )
 
 
-# ----------------------------------------------------------------------
-# HEADER
-# ----------------------------------------------------------------------
+def get_highest_risk_account(df):
+    """
+    Return the coldest/highest-priority account
+    without relying on alphabetic sorting.
+    """
+
+    risk_rank = {
+        "hot": 1,
+        "warm": 2,
+        "cold": 3,
+    }
+
+    risk_df = df.copy()
+
+    risk_df["_risk_rank"] = (
+        risk_df["engagement_signal"]
+        .astype(str)
+        .str.lower()
+        .map(risk_rank)
+        .fillna(2)
+    )
+
+    return risk_df.sort_values(
+        [
+            "_risk_rank",
+            "score",
+        ],
+        ascending=[
+            False,
+            False,
+        ],
+    ).iloc[0]
+
 
 st.title(
     "🚀 AI Lead Qualification & Revenue Prioritization"
 )
 
 st.caption(
-    "Configure your Ideal Customer Profile, upload a lead pipeline "
-    "and turn commercial data into transparent priorities, "
-    "recommended actions and AI-assisted account intelligence."
+    "Configure your Ideal Customer Profile, rank commercial opportunities, "
+    "understand every score and generate AI-assisted account intelligence."
 )
 
 
 # ----------------------------------------------------------------------
-# SIDEBAR
+# SIDEBAR — ICP, SCORING & AI SETTINGS
 # ----------------------------------------------------------------------
 
 with st.sidebar:
@@ -499,133 +429,277 @@ with st.sidebar:
     )
 
     st.caption(
-        "Configure the commercial profile "
-        "the qualification engine should prioritize."
+        "Configure the commercial model before uploading "
+        "or reviewing your pipeline."
+    )
+
+    region_options = list(
+        BASE_CONFIG[
+            "region_scores"
+        ].keys()
+    )
+
+    industry_options = list(
+        BASE_CONFIG[
+            "industry_scores"
+        ].keys()
     )
 
     preferred_regions = st.multiselect(
-        "Priority Regions",
-        options=list(
-            REGION_SCORES.keys()
-        ),
+        "Priority regions",
+        options=region_options,
         default=[
             "LATAM",
             "MENA",
         ],
+        help=(
+            "Selected regions receive "
+            "the maximum Region Fit score."
+        ),
     )
 
-    preferred_industries = (
-        st.multiselect(
-            "Priority Industries",
-            options=list(
-                INDUSTRY_SCORES.keys()
-            ),
-            default=[
-                "Agribusiness",
-                "Renewable Energy",
-                "Government / Public Sector",
-            ],
-        )
+    preferred_industries = st.multiselect(
+        "Priority industries",
+        options=industry_options,
+        default=[
+            "Agribusiness",
+            "Renewable Energy",
+            "Government / Public Sector",
+        ],
+        help=(
+            "Selected industries receive "
+            "the maximum Industry Fit score."
+        ),
     )
 
     st.markdown(
-        "#### Scoring Weights"
+        "#### Preferred Company Size"
     )
 
-    region_weight = st.slider(
-        "Region Fit",
-        min_value=0,
-        max_value=100,
-        value=int(
-            WEIGHTS["region"]
-            * 100
-        ),
+    size_col_1, size_col_2 = (
+        st.columns(2)
     )
 
-    industry_weight = st.slider(
-        "Industry Fit",
-        min_value=0,
-        max_value=100,
-        value=int(
-            WEIGHTS["industry"]
-            * 100
-        ),
+    with size_col_1:
+
+        minimum_company_size = (
+            st.number_input(
+                "Minimum employees",
+                min_value=0,
+                value=int(
+                    BASE_CONFIG[
+                        "company_size_range"
+                    ]["min"]
+                ),
+                step=10,
+            )
+        )
+
+    with size_col_2:
+
+        maximum_company_size = (
+            st.number_input(
+                "Maximum employees",
+                min_value=1,
+                value=int(
+                    BASE_CONFIG[
+                        "company_size_range"
+                    ]["max"]
+                ),
+                step=50,
+            )
+        )
+
+    st.caption(
+        "Companies inside this range receive the strongest "
+        "Company Size Fit score. Companies outside the range "
+        "are penalized progressively rather than rejected."
     )
 
-    deal_weight = st.slider(
-        "Deal Value",
-        min_value=0,
-        max_value=100,
-        value=int(
-            WEIGHTS["deal_value"]
-            * 100
-        ),
+    with st.expander(
+        "Scoring priorities",
+        expanded=True,
+    ):
+
+        st.caption(
+            "The values below express relative importance. "
+            "They are automatically normalized to 100%."
+        )
+
+        region_priority = st.slider(
+            "Region fit",
+            min_value=0,
+            max_value=100,
+            value=int(
+                BASE_CONFIG[
+                    "weights"
+                ]["region"]
+                * 100
+            ),
+            step=5,
+        )
+
+        industry_priority = st.slider(
+            "Industry fit",
+            min_value=0,
+            max_value=100,
+            value=int(
+                BASE_CONFIG[
+                    "weights"
+                ]["industry"]
+                * 100
+            ),
+            step=5,
+        )
+
+        company_size_priority = st.slider(
+            "Company size fit",
+            min_value=0,
+            max_value=100,
+            value=int(
+                BASE_CONFIG[
+                    "weights"
+                ]["company_size"]
+                * 100
+            ),
+            step=5,
+        )
+
+        deal_value_priority = st.slider(
+            "Deal value",
+            min_value=0,
+            max_value=100,
+            value=int(
+                BASE_CONFIG[
+                    "weights"
+                ]["deal_value"]
+                * 100
+            ),
+            step=5,
+        )
+
+        engagement_priority = st.slider(
+            "Engagement",
+            min_value=0,
+            max_value=100,
+            value=int(
+                BASE_CONFIG[
+                    "weights"
+                ]["engagement"]
+                * 100
+            ),
+            step=5,
+        )
+
+    with st.expander(
+        "Tier thresholds"
+    ):
+
+        tier_a_threshold = st.slider(
+            "Tier A minimum score",
+            min_value=55,
+            max_value=95,
+            value=75,
+            step=1,
+        )
+
+        tier_b_threshold = st.slider(
+            "Tier B minimum score",
+            min_value=25,
+            max_value=80,
+            value=50,
+            step=1,
+        )
+
+    try:
+
+        runtime_config = (
+            build_runtime_config(
+                preferred_regions=(
+                    preferred_regions
+                ),
+                preferred_industries=(
+                    preferred_industries
+                ),
+                minimum_company_size=(
+                    minimum_company_size
+                ),
+                maximum_company_size=(
+                    maximum_company_size
+                ),
+                region_priority=(
+                    region_priority
+                ),
+                industry_priority=(
+                    industry_priority
+                ),
+                company_size_priority=(
+                    company_size_priority
+                ),
+                deal_value_priority=(
+                    deal_value_priority
+                ),
+                engagement_priority=(
+                    engagement_priority
+                ),
+                tier_a_threshold=(
+                    tier_a_threshold
+                ),
+                tier_b_threshold=(
+                    tier_b_threshold
+                ),
+            )
+        )
+
+    except ValueError as exc:
+
+        st.error(
+            str(exc)
+        )
+
+        st.stop()
+
+    effective_weights = (
+        runtime_config[
+            "weights"
+        ]
     )
 
-    engagement_weight = st.slider(
-        "Engagement",
-        min_value=0,
-        max_value=100,
-        value=int(
-            WEIGHTS["engagement"]
-            * 100
-        ),
-    )
-
-    weights = normalized_weights(
-        region_weight,
-        industry_weight,
-        deal_weight,
-        engagement_weight,
+    st.markdown(
+        "#### Effective weights"
     )
 
     st.caption(
-        "Weights are automatically normalized to 100%."
-    )
-
-    st.markdown(
-        "#### Tier Thresholds"
-    )
-
-    tier_a_threshold = st.slider(
-        "Tier A minimum score",
-        min_value=51,
-        max_value=100,
-        value=int(
-            TIER_THRESHOLDS["A"]
-        ),
-    )
-
-    tier_b_threshold = st.slider(
-        "Tier B minimum score",
-        min_value=1,
-        max_value=(
-            tier_a_threshold - 1
-        ),
-        value=min(
-            int(
-                TIER_THRESHOLDS["B"]
-            ),
-            tier_a_threshold - 1,
-        ),
+        " · ".join(
+            [
+                f"Region {effective_weights['region']:.0%}",
+                f"Industry {effective_weights['industry']:.0%}",
+                f"Company Size {effective_weights['company_size']:.0%}",
+                f"Deal {effective_weights['deal_value']:.0%}",
+                f"Engagement {effective_weights['engagement']:.0%}",
+            ]
+        )
     )
 
     st.divider()
 
     st.header(
-        "⚙️ AI Settings"
+        "🤖 AI Settings"
     )
 
-    api_key_input = st.text_input(
-        "OpenAI API Key",
-        type="password",
-        value=os.getenv(
-            "OPENAI_API_KEY",
-            "",
-        ),
+    api_key_input = (
+        st.text_input(
+            "OpenAI API Key",
+            type="password",
+            value=os.getenv(
+                "OPENAI_API_KEY",
+                "",
+            ),
+        )
     )
 
     if api_key_input:
+
         os.environ[
             "OPENAI_API_KEY"
         ] = api_key_input
@@ -640,46 +714,64 @@ with st.sidebar:
     )
 
     st.caption(
-        "Without an API key, the application "
-        "uses local commercial intelligence templates."
+        "Without an API key, the scoring and prioritization "
+        "engine remains fully operational."
     )
 
-
-runtime_config = build_runtime_config(
-    preferred_regions,
-    preferred_industries,
-    weights,
-    tier_a_threshold,
-    tier_b_threshold,
-)
-
-
-# ----------------------------------------------------------------------
-# FILE UPLOAD
-# ----------------------------------------------------------------------
 
 uploaded = st.file_uploader(
     "Upload Pipeline CSV",
     type=["csv"],
+    help=(
+        "Required fields: company_name, country, region, industry, "
+        "estimated_deal_value_usd, engagement_signal. "
+        "Recommended for Company Size Fit: company_size."
+    ),
 )
 
 
 if uploaded is not None:
 
     try:
-        input_df = pd.read_csv(
+
+        source_df = pd.read_csv(
             uploaded
         )
 
+        source_df[
+            "estimated_deal_value_usd"
+        ] = pd.to_numeric(
+            source_df[
+                "estimated_deal_value_usd"
+            ],
+            errors="coerce",
+        )
+
+        if (
+            "company_size"
+            in source_df.columns
+        ):
+
+            source_df[
+                "company_size"
+            ] = pd.to_numeric(
+                source_df[
+                    "company_size"
+                ],
+                errors="coerce",
+            )
+
         df = rank_leads(
-            input_df,
+            source_df,
             config=runtime_config,
         )
 
     except Exception as exc:
+
         st.error(
-            f"Unable to process the CSV: {exc}"
+            f"Unable to process this pipeline: {exc}"
         )
+
         st.stop()
 
     # ------------------------------------------------------------------
@@ -716,10 +808,110 @@ if uploaded is not None:
         "Tier A Leads",
         len(
             df[
-                df["tier"] == "A"
+                df["tier"]
+                == "A"
             ]
         ),
     )
+
+    with st.expander(
+        "⚙️ Active ICP & Scoring Model"
+    ):
+
+        model_col_1, model_col_2 = (
+            st.columns(2)
+        )
+
+        with model_col_1:
+
+            st.markdown(
+                "**Priority Regions**"
+            )
+
+            st.write(
+                ", ".join(
+                    preferred_regions
+                )
+                if preferred_regions
+                else "Baseline model"
+            )
+
+            st.markdown(
+                "**Priority Industries**"
+            )
+
+            st.write(
+                ", ".join(
+                    preferred_industries
+                )
+                if preferred_industries
+                else "Baseline model"
+            )
+
+            st.markdown(
+                "**Preferred Company Size**"
+            )
+
+            st.write(
+                f"{minimum_company_size:,}–"
+                f"{maximum_company_size:,} employees"
+            )
+
+        with model_col_2:
+
+            weights_df = (
+                pd.DataFrame(
+                    {
+                        "Component": [
+                            "Region Fit",
+                            "Industry Fit",
+                            "Company Size Fit",
+                            "Deal Value",
+                            "Engagement",
+                        ],
+                        "Effective Weight": [
+                            effective_weights[
+                                "region"
+                            ],
+                            effective_weights[
+                                "industry"
+                            ],
+                            effective_weights[
+                                "company_size"
+                            ],
+                            effective_weights[
+                                "deal_value"
+                            ],
+                            effective_weights[
+                                "engagement"
+                            ],
+                        ],
+                    }
+                )
+            )
+
+            weights_df[
+                "Effective Weight"
+            ] = weights_df[
+                "Effective Weight"
+            ].map(
+                lambda value: (
+                    f"{value:.0%}"
+                )
+            )
+
+            st.dataframe(
+                weights_df,
+                hide_index=True,
+                width="stretch",
+            )
+
+            st.caption(
+                f"Tier A ≥ "
+                f"{runtime_config['tier_thresholds']['A']:.0f} · "
+                f"Tier B ≥ "
+                f"{runtime_config['tier_thresholds']['B']:.0f}"
+            )
 
     st.divider()
 
@@ -743,56 +935,11 @@ if uploaded is not None:
         ).iloc[0]
     )
 
-    top_priority = (
-        df.sort_values(
-            "score",
-            ascending=False,
-        ).iloc[0]
-    )
-
-    top_expansion = df[
-        df["region"].isin(
-            preferred_regions
-        )
-    ].sort_values(
-        "score",
-        ascending=False,
-    )
-
-    if len(
-        top_expansion
-    ) > 0:
-        top_expansion_account = (
-            top_expansion.iloc[0]
-        )
-    else:
-        top_expansion_account = (
-            top_priority
-        )
-
-    risk_map = {
-        "hot": 1,
-        "warm": 2,
-        "cold": 3,
-    }
-
-    df[
-        "_engagement_risk"
-    ] = (
-        df[
-            "engagement_signal"
-        ]
-        .astype(str)
-        .str.lower()
-        .map(risk_map)
-        .fillna(3)
-    )
-
-    highest_risk = (
+    top_partnership = (
         df.sort_values(
             [
-                "_engagement_risk",
                 "score",
+                "estimated_deal_value_usd",
             ],
             ascending=[
                 False,
@@ -801,9 +948,54 @@ if uploaded is not None:
         ).iloc[0]
     )
 
+    expansion_regions = (
+        preferred_regions
+        or [
+            "LATAM",
+            "MENA",
+            "AFRICA",
+        ]
+    )
+
+    top_expansion = (
+        df[
+            df["region"].isin(
+                expansion_regions
+            )
+        ]
+        .sort_values(
+            "score",
+            ascending=False,
+        )
+    )
+
+    if len(
+        top_expansion
+    ) > 0:
+
+        top_expansion_account = (
+            top_expansion.iloc[0]
+        )
+
+    else:
+
+        top_expansion_account = (
+            df.sort_values(
+                "score",
+                ascending=False,
+            ).iloc[0]
+        )
+
+    highest_risk = (
+        get_highest_risk_account(
+            df
+        )
+    )
+
     fastest_path = df[
         (
-            df["tier"] == "A"
+            df["tier"]
+            == "A"
         )
         &
         (
@@ -821,18 +1013,19 @@ if uploaded is not None:
     ) > 0:
 
         fastest_path_account = (
-            fastest_path
-            .sort_values(
+            fastest_path.sort_values(
                 "score",
                 ascending=False,
-            )
-            .iloc[0]
+            ).iloc[0]
         )
 
     else:
 
         fastest_path_account = (
-            top_priority
+            df.sort_values(
+                "score",
+                ascending=False,
+            ).iloc[0]
         )
 
     exec_col_1, exec_col_2, exec_col_3 = (
@@ -860,11 +1053,11 @@ if uploaded is not None:
     with exec_col_2:
 
         st.metric(
-            "Top Commercial Priority",
-            top_priority[
+            "Top Strategic Opportunity",
+            top_partnership[
                 "company_name"
             ],
-            f"Tier {top_priority['tier']}",
+            f"Tier {top_partnership['tier']}",
         )
 
         st.metric(
@@ -893,7 +1086,8 @@ if uploaded is not None:
 
         tier_a_pipeline = (
             df[
-                df["tier"] == "A"
+                df["tier"]
+                == "A"
             ][
                 "estimated_deal_value_usd"
             ].sum()
@@ -911,31 +1105,28 @@ if uploaded is not None:
 
     st.write(
         f"Focus initial commercial effort on "
-        f"**{fastest_path_account['company_name']}**. "
-        f"The current model classifies this account as "
-        f"Tier {fastest_path_account['tier']} with a score of "
-        f"**{fastest_path_account['score']}** and recommends "
-        f"**{fastest_path_account['recommended_action']}**."
+        f"**{fastest_path_account['company_name']}** because it combines "
+        f"a strong score, Tier {fastest_path_account['tier']} classification "
+        f"and a {fastest_path_account['engagement_signal']} engagement signal."
     )
 
     st.write(
         f"From a revenue perspective, "
-        f"**{top_revenue['company_name']}** represents "
-        f"the largest estimated opportunity at "
+        f"**{top_revenue['company_name']}** represents the largest "
+        f"estimated deal value at "
         f"**${top_revenue['estimated_deal_value_usd']:,.0f}**."
     )
 
     st.write(
-        f"For the active ICP, "
-        f"**{top_expansion_account['company_name']}** "
-        f"is the strongest expansion-oriented account "
-        f"among the currently preferred regions."
+        f"For market expansion, "
+        f"**{top_expansion_account['company_name']}** is the strongest "
+        f"current account within the configured expansion priorities."
     )
 
     st.divider()
 
     # ------------------------------------------------------------------
-    # PRIORITIZATION ENGINE
+    # MULTI-LEAD PRIORITIZATION
     # ------------------------------------------------------------------
 
     st.subheader(
@@ -943,13 +1134,20 @@ if uploaded is not None:
     )
 
     st.caption(
-        "Ranks accounts using the active ICP, "
-        "transparent scoring weights and deterministic "
-        "commercial recommendations."
+        "Automatically prioritizes accounts using the configured ICP, "
+        "score, tier, deal value and engagement signal."
     )
 
     priority_df = (
         df.head(10).copy()
+    )
+
+    high_value_threshold = (
+        df[
+            "estimated_deal_value_usd"
+        ].quantile(
+            0.75
+        )
     )
 
     priority_df[
@@ -966,38 +1164,47 @@ if uploaded is not None:
 
     priority_df[
         "why_this_account_matters"
-    ] = priority_df[
-        "score_rationale"
+    ] = priority_df.apply(
+        lambda row: priority_reason(
+            row,
+            high_value_threshold,
+        ),
+        axis=1,
+    )
+
+    priority_columns = [
+        "company_name",
+        "country",
+        "industry",
     ]
+
+    if "company_size" in priority_df.columns:
+        priority_columns.append(
+            "company_size"
+        )
+
+    priority_columns.extend(
+        [
+            "estimated_deal_value_usd",
+            "score",
+            "tier",
+            "commercial_priority",
+            "why_this_account_matters",
+            "recommended_action",
+        ]
+    )
 
     st.dataframe(
         priority_df[
-            [
-                "company_name",
-                "country",
-                "industry",
-                "estimated_deal_value_usd",
-                "score",
-                "tier",
-                "commercial_priority",
-                "recommended_action",
-            ]
+            priority_columns
         ],
         width="stretch",
     )
 
     priority_csv = (
-        priority_df
-        .drop(
-            columns=[
-                "_engagement_risk"
-            ],
-            errors="ignore",
-        )
-        .to_csv(
+        priority_df.to_csv(
             index=False
-        )
-        .encode(
+        ).encode(
             "utf-8"
         )
     )
@@ -1019,18 +1226,30 @@ if uploaded is not None:
         "🏆 Top 5 Leads"
     )
 
+    top_columns = [
+        "company_name",
+        "country",
+        "industry",
+    ]
+
+    if "company_size" in df.columns:
+        top_columns.append(
+            "company_size"
+        )
+
+    top_columns.extend(
+        [
+            "estimated_deal_value_usd",
+            "engagement_signal",
+            "score",
+            "tier",
+            "recommended_action",
+        ]
+    )
+
     st.dataframe(
         df[
-            [
-                "company_name",
-                "country",
-                "industry",
-                "estimated_deal_value_usd",
-                "engagement_signal",
-                "score",
-                "tier",
-                "recommended_action",
-            ]
+            top_columns
         ].head(5),
         width="stretch",
     )
@@ -1042,21 +1261,19 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.subheader(
-        "🤖 AI Lead Insights & Outreach"
+        "🤖 Lead Intelligence & Outreach"
     )
 
     st.caption(
-        "Interpret deterministic commercial intelligence "
-        "and generate account strategy and outreach."
+        "Inspect the deterministic score first, then generate "
+        "AI-assisted account intelligence and outreach assets."
     )
 
-    selected_company = (
-        st.selectbox(
-            "Select a lead",
-            df[
-                "company_name"
-            ].tolist(),
-        )
+    selected_company = st.selectbox(
+        "Select a lead",
+        df[
+            "company_name"
+        ].tolist(),
     )
 
     selected_row = df[
@@ -1153,6 +1370,21 @@ if uploaded is not None:
             f"{selected_row['industry']}"
         )
 
+        if (
+            "company_size"
+            in selected_row.index
+            and pd.notna(
+                selected_row[
+                    "company_size"
+                ]
+            )
+        ):
+
+            st.write(
+                f"**Employees:** "
+                f"{selected_row['company_size']:,.0f}"
+            )
+
     with workspace_col_2:
 
         st.markdown(
@@ -1182,35 +1414,41 @@ if uploaded is not None:
     with workspace_col_3:
 
         st.markdown(
-            "#### 🚀 Recommended Motion"
+            "#### 🚀 Recommended Action"
         )
 
-        action = (
+        if (
             selected_row[
-                "recommended_action"
+                "tier"
             ]
-        )
-
-        if selected_row[
-            "tier"
-        ] == "A":
+            == "A"
+        ):
 
             st.success(
-                action
+                selected_row[
+                    "recommended_action"
+                ]
             )
 
-        elif selected_row[
-            "tier"
-        ] == "B":
+        elif (
+            selected_row[
+                "tier"
+            ]
+            == "B"
+        ):
 
             st.info(
-                action
+                selected_row[
+                    "recommended_action"
+                ]
             )
 
         else:
 
             st.warning(
-                action
+                selected_row[
+                    "recommended_action"
+                ]
             )
 
     # ------------------------------------------------------------------
@@ -1218,127 +1456,236 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.markdown(
-        "### 🔎 Explainable Score"
+        "#### 🔎 Explainable Score"
     )
 
     st.caption(
-        "See exactly how each commercial factor "
-        "contributed to the final qualification score."
+        "Every score is generated by the deterministic commercial model. "
+        "AI does not set or modify the score."
     )
 
-    breakdown_df = (
-        format_score_breakdown(
-            selected_row[
-                "score_breakdown"
-            ],
-            runtime_config[
-                "weights"
-            ],
-        )
-    )
+    try:
 
-    if not breakdown_df.empty:
-
-        breakdown_col_1, breakdown_col_2 = (
-            st.columns(
-                [1.4, 1]
+        score_breakdown = (
+            json.loads(
+                selected_row[
+                    "score_breakdown"
+                ]
             )
+        )
+
+        contribution_map = (
+            score_breakdown[
+                "weighted_contributions"
+            ]
+        )
+
+        raw_score_map = (
+            score_breakdown[
+                "raw_scores"
+            ]
+        )
+
+        breakdown_df = (
+            pd.DataFrame(
+                {
+                    "Component": [
+                        "Region Fit",
+                        "Industry Fit",
+                        "Company Size Fit",
+                        "Deal Value",
+                        "Engagement",
+                    ],
+                    "Raw Score": [
+                        raw_score_map[
+                            "region"
+                        ],
+                        raw_score_map[
+                            "industry"
+                        ],
+                        raw_score_map[
+                            "company_size"
+                        ],
+                        raw_score_map[
+                            "deal_value"
+                        ],
+                        raw_score_map[
+                            "engagement"
+                        ],
+                    ],
+                    "Weight": [
+                        effective_weights[
+                            "region"
+                        ],
+                        effective_weights[
+                            "industry"
+                        ],
+                        effective_weights[
+                            "company_size"
+                        ],
+                        effective_weights[
+                            "deal_value"
+                        ],
+                        effective_weights[
+                            "engagement"
+                        ],
+                    ],
+                    "Weighted Contribution": [
+                        contribution_map[
+                            "region"
+                        ],
+                        contribution_map[
+                            "industry"
+                        ],
+                        contribution_map[
+                            "company_size"
+                        ],
+                        contribution_map[
+                            "deal_value"
+                        ],
+                        contribution_map[
+                            "engagement"
+                        ],
+                    ],
+                }
+            )
+        )
+
+        breakdown_display = (
+            breakdown_df.copy()
+        )
+
+        breakdown_display[
+            "Weight"
+        ] = breakdown_display[
+            "Weight"
+        ].map(
+            lambda value: (
+                f"{value:.0%}"
+            )
+        )
+
+        (
+            breakdown_col_1,
+            breakdown_col_2,
+        ) = st.columns(
+            [
+                1,
+                1.2,
+            ]
         )
 
         with breakdown_col_1:
 
             st.dataframe(
-                breakdown_df,
-                width="stretch",
+                breakdown_display,
                 hide_index=True,
+                width="stretch",
             )
 
         with breakdown_col_2:
 
-            fig_breakdown = px.bar(
-                breakdown_df,
-                x="Component",
-                y="Weighted Contribution",
-                title="Score Contribution",
+            fig_breakdown = (
+                px.bar(
+                    breakdown_df,
+                    x="Component",
+                    y="Weighted Contribution",
+                    title=(
+                        "Contribution to Final Score"
+                    ),
+                )
             )
 
             st.plotly_chart(
                 fig_breakdown,
                 config=PLOTLY_CONFIG,
-                width="stretch",
             )
 
+        st.caption(
+            selected_row[
+                "score_rationale"
+            ]
+        )
+
+    except Exception:
+
+        st.info(
+            "Score breakdown is not available for this account."
+        )
+
+    # ------------------------------------------------------------------
+    # COMMERCIAL INTERPRETATION
+    # ------------------------------------------------------------------
+
     st.markdown(
-        "**Scoring rationale:**"
+        "#### 🧠 Commercial Interpretation"
     )
 
-    st.write(
-        selected_row[
-            "score_rationale"
-        ]
-    )
+    (
+        interpretation_col_1,
+        interpretation_col_2,
+        interpretation_col_3,
+    ) = st.columns(3)
 
-    with st.expander(
-        "View Active ICP & Scoring Model"
-    ):
+    with interpretation_col_1:
 
-        st.write(
-            "**Priority Regions:**",
-            (
-                ", ".join(
-                    preferred_regions
-                )
-                if preferred_regions
-                else "None selected"
-            ),
+        st.markdown(
+            "**Why This Lead Matters**"
         )
 
         st.write(
-            "**Priority Industries:**",
-            (
-                ", ".join(
-                    preferred_industries
-                )
-                if preferred_industries
-                else "None selected"
-            ),
+            f"{selected_row['company_name']} operates in "
+            f"{selected_row['industry']} and currently ranks as a "
+            f"Tier {selected_row['tier']} opportunity with a "
+            f"score of {selected_row['score']}."
         )
 
-        weights_df = pd.DataFrame(
-            {
-                "Factor": [
-                    "Region",
-                    "Industry",
-                    "Deal Value",
-                    "Engagement",
-                ],
-                "Weight": [
-                    f"{weights['region'] * 100:.1f}%",
-                    f"{weights['industry'] * 100:.1f}%",
-                    f"{weights['deal_value'] * 100:.1f}%",
-                    f"{weights['engagement'] * 100:.1f}%",
-                ],
-            }
-        )
+    with interpretation_col_2:
 
-        st.dataframe(
-            weights_df,
-            hide_index=True,
-            width="stretch",
+        st.markdown(
+            "**Commercial Motion**"
         )
 
         st.write(
-            f"**Tier A:** {tier_a_threshold}+"
+            selected_row[
+                "recommended_action"
+            ]
         )
 
-        st.write(
-            f"**Tier B:** {tier_b_threshold}–"
-            f"{tier_a_threshold - 1}"
+    with interpretation_col_3:
+
+        st.markdown(
+            "**Engagement Risk**"
         )
 
-        st.write(
-            f"**Tier C:** below {tier_b_threshold}"
-        )
+        engagement = str(
+            selected_row[
+                "engagement_signal"
+            ]
+        ).lower()
+
+        if engagement == "hot":
+
+            st.write(
+                "Low engagement risk. "
+                "The account shows a strong buying "
+                "or partnership signal."
+            )
+
+        elif engagement == "warm":
+
+            st.write(
+                "Moderate engagement risk. "
+                "The account may require additional nurturing."
+            )
+
+        else:
+
+            st.write(
+                "Higher engagement risk. "
+                "The account may require education "
+                "and longer-cycle development."
+            )
 
     st.divider()
 
@@ -1456,7 +1803,6 @@ if uploaded is not None:
     st.plotly_chart(
         fig_scores,
         config=PLOTLY_CONFIG,
-        width="stretch",
     )
 
     col_left, col_right = (
@@ -1469,16 +1815,19 @@ if uploaded is not None:
             "🏭 Industry Distribution"
         )
 
-        fig_industry = px.pie(
-            df,
-            names="industry",
-            title="Leads by Industry",
+        fig_industry = (
+            px.pie(
+                df,
+                names="industry",
+                title=(
+                    "Leads by Industry"
+                ),
+            )
         )
 
         st.plotly_chart(
             fig_industry,
             config=PLOTLY_CONFIG,
-            width="stretch",
         )
 
     with col_right:
@@ -1497,21 +1846,22 @@ if uploaded is not None:
             .reset_index()
         )
 
-        fig_revenue = px.bar(
-            revenue_by_tier,
-            x="tier",
-            y=(
-                "estimated_deal_value_usd"
-            ),
-            title=(
-                "Revenue Potential by Tier"
-            ),
+        fig_revenue = (
+            px.bar(
+                revenue_by_tier,
+                x="tier",
+                y=(
+                    "estimated_deal_value_usd"
+                ),
+                title=(
+                    "Revenue Potential by Tier"
+                ),
+            )
         )
 
         st.plotly_chart(
             fig_revenue,
             config=PLOTLY_CONFIG,
-            width="stretch",
         )
 
     st.divider()
@@ -1533,17 +1883,20 @@ if uploaded is not None:
         "count",
     ]
 
-    fig_country = px.bar(
-        country_df,
-        x="country",
-        y="count",
-        title="Leads by Country",
+    fig_country = (
+        px.bar(
+            country_df,
+            x="country",
+            y="count",
+            title=(
+                "Leads by Country"
+            ),
+        )
     )
 
     st.plotly_chart(
         fig_country,
         config=PLOTLY_CONFIG,
-        width="stretch",
     )
 
     st.divider()
@@ -1556,24 +1909,15 @@ if uploaded is not None:
         "📋 Full Ranked Pipeline"
     )
 
-    display_df = df.drop(
-        columns=[
-            "_engagement_risk"
-        ],
-        errors="ignore",
-    )
-
     st.dataframe(
-        display_df,
+        df,
         width="stretch",
     )
 
     csv = (
-        display_df
-        .to_csv(
+        df.to_csv(
             index=False
-        )
-        .encode(
+        ).encode(
             "utf-8"
         )
     )
@@ -1589,5 +1933,6 @@ if uploaded is not None:
 else:
 
     st.info(
-        "Upload a compatible lead CSV to begin."
+        "Upload data/sample_leads.csv "
+        "or exports/ranked_leads.csv to begin."
     )
