@@ -1,6 +1,12 @@
-# AI Lead Qualification & Revenue Prioritization Platform
+# Lead Qualification & Revenue Prioritization Platform
 
 ### Configurable ICP Scoring | Explainable Commercial Intelligence | Revenue Prioritization | AI-Assisted Account Strategy
+
+[![Live App](https://img.shields.io/badge/Live%20App-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://lead-qualification-scorer-eambrosin.streamlit.app/)
+![Release](https://img.shields.io/badge/Release-v2.0.0-success)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
+![Commercial Intelligence](https://img.shields.io/badge/Commercial%20Intelligence-PRIORITIZE-8250df)
 
 A practical Commercial Intelligence application designed to help Business Development, Sales, Partnerships and GTM teams determine **which opportunities deserve attention, why they matter and what commercial action should happen next**.
 
@@ -8,63 +14,93 @@ The platform combines a transparent deterministic scoring engine with an optiona
 
 **AI does not determine the lead score.**
 
-Commercial scores, tiers and prioritization are calculated using configurable business rules. AI is used afterward to interpret those results, support account strategy and generate outreach.
+Commercial scores, tiers and prioritization are calculated using configurable business rules. AI is used afterward to interpret those results, support account strategy and assist commercial execution.
+
+---
+
+# Role in the Commercial Intelligence Ecosystem
+
+This application represents the **PRIORITIZE** stage of the broader AI Business Development Toolkit.
+
+```text
+IDENTIFY
+Opportunity Discovery
+
+        ↓
+
+PRIORITIZE
+Lead Qualification & Revenue Prioritization
+← YOU ARE HERE
+
+        ↓
+
+ENGAGE
+Adaptive Outreach Intelligence
+
+        ↓
+
+PARTNER
+Partnership Opportunity Intelligence
+
+        ↓
+
+EXPAND
+Global Market Entry Intelligence
+```
+
+The objective is to convert raw commercial pipeline data into a structured decision layer before commercial resources are allocated.
 
 ---
 
 ## 🚀 Live Application
 
-[Launch the Streamlit App](https://lead-qualification-scorer-eambrosin.streamlit.app/)
+[Launch the Lead Qualification & Revenue Prioritization Platform](https://lead-qualification-scorer-eambrosin.streamlit.app/)
 
 ---
 
-## Product Preview
+# Product Preview
 
-### Executive Commercial Intelligence
+## Executive Commercial Intelligence
 
-<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-executive-summary.png" alt="Executive Commercial Intelligence Dashboard" width="100%">
+![Executive Commercial Intelligence](screenshots/v2-executive-summary.png)
 
 Configure the Ideal Customer Profile, preferred company size and scoring priorities before evaluating the commercial pipeline.
 
 ---
 
-### Executive Account Dashboard
+## Executive Account Dashboard
 
-<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-executive-dashboard.png" alt="Executive Account Dashboard" width="100%">
+![Executive Account Dashboard](screenshots/v2-executive-dashboard.png)
 
-Identify the highest-value opportunities, fastest paths to revenue, strategic priorities, expansion opportunities and engagement risks.
+Identify high-value opportunities, strategic priorities, expansion opportunities, engagement risks and the accounts that deserve immediate commercial attention.
 
 ---
 
-### Multi-Lead Prioritization Engine
+## Multi-Lead Prioritization Engine
 
-<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-prioritization-engine.png" alt="Multi-Lead Prioritization Engine" width="100%">
+![Multi-Lead Prioritization Engine](screenshots/v2-prioritization-engine.png)
 
 Rank the commercial pipeline using the active ICP, transparent scoring logic, company-size fit and recommended commercial actions.
 
 ---
 
-### Explainable Commercial Scoring
+## Explainable Commercial Scoring
 
-<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-explainable-score.png" alt="Explainable Commercial Scoring" width="100%">
+![Explainable Commercial Scoring](screenshots/v2-explainable-score.png)
 
 Understand exactly how **Region Fit, Industry Fit, Company Size Fit, Deal Value and Engagement** contribute to the final commercial score.
 
 ---
 
-### AI-Assisted Account Intelligence
+## AI-Assisted Account Intelligence
 
-<img src="https://raw.githubusercontent.com/Eambrosin/lead-qualification-scorer/main/screenshots/v2-ai-intelligence.png" alt="AI-Assisted Account Intelligence" width="100%">
+![AI-Assisted Account Intelligence](screenshots/v2-ai-intelligence.png)
 
 Use deterministic qualification results as context for AI-assisted account interpretation, GTM recommendations, discovery questions and commercial next steps.
 
 ---
 
-## Business Problem
-
----
-
-## Business Problem
+# Business Problem
 
 Commercial teams frequently manage more accounts and opportunities than they can effectively pursue.
 
@@ -74,15 +110,17 @@ Raw lead lists rarely answer the questions that matter most:
 - Which opportunities best match our Ideal Customer Profile?
 - Where should commercial resources be allocated?
 - Why did one account rank higher than another?
+- Which opportunities represent meaningful revenue potential?
+- Which accounts require more qualification?
 - What should the next Business Development action be?
 
-This platform converts pipeline data into a structured and explainable commercial prioritization workflow.
+Without a structured prioritization layer, commercial teams risk spending equal effort on opportunities with very different levels of relevance and value.
 
 ---
 
-## Solution
+# Solution
 
-Users define their Ideal Customer Profile, configure commercial priorities and upload a CSV pipeline.
+Users define their Ideal Customer Profile, configure commercial priorities and upload a pipeline.
 
 The system then:
 
@@ -92,90 +130,115 @@ The system then:
 4. Explains exactly how the score was calculated.
 5. Recommends the next commercial action.
 6. Ranks the complete opportunity pipeline.
-7. Optionally generates AI-assisted account intelligence and outreach.
+7. Provides executive pipeline visibility.
+8. Exports the prioritized pipeline.
+9. Optionally generates AI-assisted account intelligence.
+10. Can pass qualification context directly into the Adaptive Outreach Intelligence Platform.
 
 ---
 
-## Commercial Intelligence Workflow
+# Commercial Intelligence Workflow
 
-### ICP → Score → Explain → Prioritize → Act
+## ICP → Score → Explain → Prioritize → Act
 
-The platform follows a simple decision-support process:
+```text
+PIPELINE
+    ↓
+ICP CONFIGURATION
+    ↓
+COMMERCIAL EVALUATION
+    ↓
+EXPLAINABLE SCORE
+    ↓
+PRIORITY TIER
+    ↓
+RECOMMENDED ACTION
+    ↓
+PIPELINE PRIORITIZATION
+    ↓
+COMMERCIAL EXECUTION
+```
 
-### 1. Configure the ICP
+The application is designed around one central question:
 
-Define what a commercially attractive account looks like.
-
-### 2. Score Opportunities
-
-Evaluate leads using deterministic commercial criteria.
-
-### 3. Explain the Score
-
-Show the contribution of every scoring factor.
-
-### 4. Prioritize the Pipeline
-
-Rank accounts according to commercial relevance.
-
-### 5. Recommend Action
-
-Translate qualification results into practical next steps.
-
-### 6. Add AI Intelligence
-
-Use AI to interpret the deterministic result and support account strategy and outreach.
+> **Where should the commercial team spend time first?**
 
 ---
 
-## 🎯 Configurable Ideal Customer Profile
+# 🎯 Configurable Ideal Customer Profile
 
-The v2.0 scoring model allows users to configure:
+Version 2.0 allows users to define what a commercially attractive opportunity looks like.
 
-### Priority Regions
+The active ICP can include:
 
-Examples:
+- Priority Regions
+- Priority Industries
+- Preferred Company Size
+- Relative importance of each scoring factor
+- Tier thresholds
 
-- LATAM
-- MENA
-- EU
-- North America
-- APAC
-- Africa
+This allows the same application to support different commercial strategies without changing the underlying code.
 
-### Priority Industries
+---
 
-Examples:
+## Priority Regions
 
-- Agribusiness
-- Renewable Energy
-- Government / Public Sector
-- Fintech
-- Real Estate
-- Logistics & Trade
+Examples include:
 
-### Preferred Company Size
+```text
+LATAM
+MENA
+Europe
+North America
+APAC
+Africa
+```
+
+Selected target regions receive the strongest Region Fit score.
+
+Other markets remain eligible but may receive lower relative scores according to the configured model.
+
+---
+
+## Priority Industries
+
+Examples include:
+
+```text
+Agribusiness
+Renewable Energy
+Government / Public Sector
+Fintech
+Real Estate
+Logistics & Trade
+```
+
+This allows the scoring model to reflect actual commercial focus rather than assuming every sector has equal relevance.
+
+---
+
+## Preferred Company Size
 
 Users can define a preferred employee range.
 
 Example:
 
 ```text
-Minimum employees: 50
-Maximum employees: 1,000
+Minimum Employees: 50
+Maximum Employees: 1,000
 ```
 
-Companies inside the target range receive the strongest Company Size Fit score.
+Companies inside the preferred range receive the strongest Company Size Fit.
 
 Companies outside the range are progressively penalized rather than automatically rejected.
 
-This avoids the assumption that a larger company is always a better commercial opportunity.
+This avoids the simplistic assumption that a larger company is always a better commercial opportunity.
 
 ---
 
-## ⚖️ Configurable Scoring Model
+# ⚖️ Configurable Scoring Model
 
-The default v2.0 scoring model evaluates five commercial dimensions:
+The default v2.0 model evaluates five commercial dimensions.
 
 | Component | Default Weight |
 |---|---:|
@@ -191,7 +254,7 @@ Weights are automatically normalized to 100%.
 
 ---
 
-## 🔎 Explainable Scoring
+# 🔎 Explainable Commercial Scoring
 
 Every final score can be audited.
 
@@ -207,53 +270,73 @@ Engagement          100/100 × 20% = 20.0
 Final Score                         90.8
 ```
 
-The system stores both:
+The engine stores both:
 
-- Raw component scores
-- Weighted contributions
+```text
+Raw Component Scores
+        +
+Weighted Contributions
+        =
+Final Commercial Score
+```
 
-This makes the qualification logic transparent rather than relying on a black-box AI score.
+This makes the qualification process transparent instead of relying on a black-box AI score.
 
 ---
 
-## Priority Tiers
+# Priority Tiers
 
 The default classification model is:
 
 ```text
 Tier A = 75+
 Tier B = 50–74
-Tier C = below 50
+Tier C = Below 50
 ```
 
 Tier thresholds can also be configured directly from the application.
 
-### Tier A
+---
+
+## Tier A
 
 High-priority commercial opportunities.
 
-### Tier B
+These accounts generally justify concentrated Business Development attention.
 
-Opportunities requiring additional qualification or nurturing.
+---
 
-### Tier C
+## Tier B
+
+Commercially relevant opportunities that may require additional qualification, research or nurturing.
+
+---
+
+## Tier C
 
 Lower-priority accounts where commercial resources should be allocated selectively.
 
 ---
 
-## 🚀 Recommended Commercial Actions
+# 🚀 Recommended Commercial Actions
 
-The scoring engine converts qualification results into practical Business Development recommendations.
+The scoring engine translates qualification results into practical Business Development recommendations.
 
 Examples include:
 
-- Immediate personalized outreach
-- High-priority outreach with account research
-- Priority follow-up and qualification
-- Nurture and continue qualification
-- Validate strategic fit before allocating resources
-- Low-priority nurture
+```text
+Immediate Personalized Outreach
+
+High-Priority Outreach with Account Research
+
+Priority Follow-Up and Qualification
+
+Nurture and Continue Qualification
+
+Validate Strategic Fit Before Allocating Resources
+
+Low-Priority Nurture
+```
 
 The objective is to move beyond scoring and answer:
 
@@ -261,9 +344,11 @@ The objective is to move beyond scoring and answer:
 
 ---
 
-## 👔 Executive Account Dashboard
+# 👔 Executive Account Dashboard
 
-The application provides an executive view of the pipeline, including:
+The application provides an executive view of the commercial pipeline.
+
+Metrics and recommendations can include:
 
 - Total Leads
 - Total Pipeline Value
@@ -276,36 +361,36 @@ The application provides an executive view of the pipeline, including:
 - Top Expansion Opportunity
 - Highest Engagement Risk
 
-This allows the application to operate as a lightweight Commercial Intelligence layer rather than simply a lead-scoring calculator.
+This allows the application to operate as a lightweight **Commercial Intelligence layer**, rather than simply a lead-scoring calculator.
 
 ---
 
-## 🎯 Multi-Lead Prioritization Engine
+# 🎯 Multi-Lead Prioritization Engine
 
-The full pipeline is automatically ranked according to the active ICP.
+The complete pipeline is automatically ranked according to the active ICP.
 
 For each account, the platform can display:
 
 - Company
 - Country
+- Region
 - Industry
 - Company Size
 - Estimated Deal Value
 - Engagement Signal
 - Commercial Score
-- Tier
-- Commercial Priority
+- Priority Tier
 - Recommended Action
 
-Prioritized pipelines can be exported as CSV files.
+The result is a prioritized commercial pipeline designed to support resource allocation.
 
 ---
 
-## 🧩 Lead Intelligence Workspace
+# 🧩 Lead Intelligence Workspace
 
-Users can select individual accounts and inspect:
+Users can select individual accounts and inspect their commercial context.
 
-### Company Profile
+## Company Profile
 
 - Company
 - Country
@@ -313,28 +398,28 @@ Users can select individual accounts and inspect:
 - Industry
 - Company Size
 
-### Revenue Potential
+## Revenue Potential
 
 - Estimated Deal Value
 - Commercial Score
 - Priority Tier
 - Engagement Signal
 
-### Recommended Action
+## Recommended Action
 
-The deterministic engine provides the appropriate commercial motion based on the qualification result.
+The deterministic engine proposes the appropriate commercial motion based on the qualification result.
 
-### Explainable Score
+## Explainable Score
 
 A component-by-component breakdown shows exactly how the final score was constructed.
 
 ---
 
-## 🤖 AI-Assisted Commercial Intelligence
+# 🤖 AI-Assisted Account Intelligence
 
-The AI layer receives the deterministic scoring output as context.
+The AI layer receives the deterministic qualification result as context.
 
-This includes:
+This can include:
 
 - Commercial Score
 - Priority Tier
@@ -343,7 +428,7 @@ This includes:
 - Recommended Action
 - Priority Regions
 - Priority Industries
-- Company Size ICP
+- Preferred Company Size
 - Scoring Weights
 - Tier Thresholds
 
@@ -351,7 +436,9 @@ The AI is explicitly instructed **not to replace or modify the deterministic sco
 
 Instead, it provides qualitative commercial interpretation.
 
-### AI Account Intelligence
+---
+
+## AI Account Intelligence
 
 The system can generate:
 
@@ -362,9 +449,21 @@ The system can generate:
 - Discovery Questions
 - Next Best Action
 
-### AI Outreach
+This allows the qualification engine to answer not only:
 
-The platform can also generate:
+> **How attractive is this account?**
+
+but also:
+
+> **How should the commercial team interpret and approach it?**
+
+---
+
+# ✉️ Embedded AI Outreach Assistance
+
+The application also includes lightweight account-level outreach assistance.
+
+It can generate:
 
 - Opportunity Hypothesis
 - Email Subject
@@ -378,7 +477,116 @@ Internal scoring information is not exposed to prospects.
 
 ---
 
-## 🛡️ Evidence-Aware AI Design
+# Important Distinction: Embedded Outreach vs Adaptive Outreach Platform
+
+The lightweight outreach capability inside this application is designed to assist with **individual account execution**.
+
+It is different from the standalone:
+
+## Adaptive Outreach Intelligence Platform
+
+The downstream Outreach platform provides pipeline-level functionality including:
+
+- Commercial Intelligence Mode
+- Adaptive priority
+- Dynamic cadence
+- Channel strategy
+- Multilingual communication
+- Prospecting workflows
+- Post-Proposal workflows
+- Revenue At Risk visibility
+- Commercial Decision Support
+- Adaptive sequence generation
+
+The Lead Qualification Platform determines:
+
+```text
+WHO DESERVES ATTENTION
+```
+
+The Adaptive Outreach Platform determines:
+
+```text
+HOW AND WHEN TO ENGAGE
+```
+
+---
+
+# 🔗 Integration with Adaptive Outreach Intelligence
+
+The two applications are designed to work together.
+
+The Lead Qualification Platform can export a prioritized commercial pipeline that is directly consumed by the Adaptive Outreach Intelligence Platform.
+
+The integrated workflow is:
+
+```text
+LEAD QUALIFICATION
+        ↓
+ICP FIT
+        ↓
+COMMERCIAL SCORE
+        ↓
+PRIORITY TIER
+        ↓
+RECOMMENDED ACTION
+        ↓
+CSV EXPORT
+        ↓
+ADAPTIVE OUTREACH INTELLIGENCE
+        ↓
+OUTREACH PRIORITY
+        ↓
+CADENCE
+        ↓
+CHANNEL
+        ↓
+COMMERCIAL MESSAGE
+```
+
+This preserves qualification context between analysis and execution.
+
+---
+
+## Data Handoff
+
+Typical exported fields include:
+
+```text
+company_name
+country
+region
+industry
+company_size
+estimated_deal_value_usd
+engagement_signal
+score
+tier
+recommended_action
+score_rationale
+```
+
+The Outreach platform automatically detects this information and activates:
+
+```text
+Commercial Intelligence Mode
+```
+
+---
+
+## Adaptive Outreach Intelligence Platform
+
+### Live Application
+
+[Launch Adaptive Outreach Intelligence](https://outreach-sequence-generator-7dcmglcxfnmszlodg8lqre.streamlit.app/)
+
+### Repository
+
+[View Repository](https://github.com/Eambrosin/outreach-sequence-generator)
+
+---
+
+# 🛡️ Evidence-Aware AI Design
 
 The AI layer is instructed not to fabricate:
 
@@ -388,22 +596,75 @@ The AI layer is instructed not to fabricate:
 - Market research
 - Expansion plans
 - Business problems
+- Internal projects
+- Unverified strategic priorities
 
-Unverified commercial ideas are treated as **hypotheses to validate**, not as facts.
+Unverified commercial ideas should be treated as:
 
-This keeps the AI layer aligned with practical Business Development workflows.
+```text
+Hypotheses
+Questions
+Areas to Validate
+```
+
+rather than facts.
+
+This keeps the AI layer aligned with practical and responsible Business Development workflows.
 
 ---
 
-## 🔄 AI-Optional Architecture
+# Internal vs External Commercial Information
+
+The platform explicitly separates internal qualification information from prospect-facing communication.
+
+## Internal
+
+```text
+Commercial Score
+Priority Tier
+Score Rationale
+Score Breakdown
+ICP Configuration
+Recommended Action
+Commercial Ranking
+```
+
+## External
+
+```text
+Relevant Business Context
+Commercial Question
+Value Proposition
+Discovery Question
+CTA
+Recommended Next Step
+```
+
+A prospect should never receive statements such as:
+
+```text
+Your score is 88.
+
+You are classified as Tier A.
+
+You are a High Priority account.
+```
+
+---
+
+# 🔄 AI-Optional Architecture
 
 The deterministic qualification engine works without an API key.
 
 Without AI access, the platform still provides:
 
 - ICP Configuration
-- Lead Scoring
+- Region Fit
+- Industry Fit
 - Company Size Fit
+- Deal Value assessment
+- Engagement scoring
+- Lead Scoring
 - Tier Classification
 - Explainable Scoring
 - Revenue Prioritization
@@ -412,28 +673,57 @@ Without AI access, the platform still provides:
 - Pipeline Ranking
 - CSV Export
 
-A local fallback layer also provides basic commercial interpretation and outreach templates.
-
-AI therefore enhances the platform but does not control the core qualification workflow.
+AI enhances the platform but does not control the core qualification workflow.
 
 ---
 
-## 📊 Sample Dataset
+# Architecture Principle
 
-The repository includes a demonstration pipeline in:
+The system follows a simple architectural rule:
+
+> **Use structured commercial logic to decide what matters, then use AI to help humans understand and act on that decision.**
+
+The deterministic engine remains the source of truth for:
+
+```text
+Scores
+Thresholds
+Priority
+Ranking
+Tier Classification
+Commercial Qualification
+```
+
+AI can support:
+
+```text
+Interpretation
+Commercial Hypotheses
+Account Intelligence
+GTM Recommendations
+Discovery Questions
+Outreach Drafting
+Next-Step Suggestions
+```
+
+---
+
+# 📊 Sample Dataset
+
+The repository includes a demonstration pipeline:
 
 ```text
 data/sample_leads.csv
 ```
 
-The sample contains accounts across:
+The dataset contains accounts across multiple markets including:
 
 - LATAM
 - Europe
 - MENA
 - APAC
 
-and multiple sectors including:
+and sectors including:
 
 - Renewable Energy
 - Agribusiness
@@ -442,11 +732,11 @@ and multiple sectors including:
 - Logistics & Trade
 - Real Estate
 
-The dataset intentionally includes different company sizes, deal values and engagement signals so users can test how changes to the ICP affect prioritization.
+The sample intentionally includes different company sizes, deal values and engagement signals so users can test how ICP changes affect prioritization.
 
 ---
 
-## CSV Format
+# CSV Format
 
 Recommended columns:
 
@@ -471,37 +761,43 @@ Gulf Trade Partners,UAE,MENA,Logistics & Trade,300,500000,hot
 
 `company_size` is recommended for the complete v2.0 ICP model.
 
-The application remains capable of processing pipelines where company-size information is unavailable.
+The application can still process pipelines where company-size information is unavailable.
 
 ---
 
-## Architecture
+# System Architecture
 
 ```text
 Pipeline CSV
-    ↓
+      ↓
 ICP Configuration
-    ↓
+      ↓
 Deterministic Scoring Engine
-    ↓
+      ↓
 Commercial Score
-    ↓
+      ↓
 Priority Tier
-    ↓
+      ↓
 Explainable Score Breakdown
-    ↓
+      ↓
 Recommended Commercial Action
-    ↓
+      ↓
+Executive Prioritization
+      ↓
 Optional AI Interpretation
-    ↓
-Account Intelligence / Outreach
+      ↓
+Account Intelligence
+      ↓
+CSV Export
+      ↓
+Adaptive Outreach Intelligence
 ```
 
 The deterministic engine remains the source of truth for commercial qualification.
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
 lead-qualification-scorer/
@@ -519,20 +815,34 @@ lead-qualification-scorer/
 ├── exports/
 │
 └── screenshots/
+    ├── v2-executive-summary.png
+    ├── v2-executive-dashboard.png
+    ├── v2-prioritization-engine.png
+    ├── v2-explainable-score.png
+    └── v2-ai-intelligence.png
 ```
 
-### `lead_qualifier.py`
+---
+
+## `lead_qualifier.py`
 
 Deterministic Commercial Intelligence engine responsible for:
 
 - ICP scoring
+- Region Fit
+- Industry Fit
 - Company Size Fit
+- Deal Value scoring
+- Engagement scoring
 - Weighting
 - Tier classification
 - Score explainability
 - Recommended commercial actions
+- Pipeline ranking
 
-### `app.py`
+---
+
+## `app.py`
 
 Streamlit interface responsible for:
 
@@ -541,21 +851,26 @@ Streamlit interface responsible for:
 - Executive dashboards
 - Lead prioritization
 - Explainable scoring
+- Account workspace
 - AI workflow
 - CSV export
 
-### `ai_insights.py`
+---
+
+## `ai_insights.py`
 
 Optional qualitative intelligence layer responsible for:
 
 - Account interpretation
+- Opportunity assessment
+- Score interpretation
 - GTM recommendations
 - Discovery questions
-- Outreach generation
+- Outreach assistance
 
 ---
 
-## Technology Stack
+# Technology Stack
 
 - Python
 - Streamlit
@@ -567,7 +882,7 @@ Optional qualitative intelligence layer responsible for:
 
 ---
 
-## Run Locally
+# Run Locally
 
 Clone the repository:
 
@@ -607,44 +922,114 @@ streamlit run app.py
 
 ---
 
-## Optional OpenAI Configuration
+# Optional OpenAI Configuration
 
 The application works without an API key.
 
-To enable AI-assisted Account Intelligence and Outreach, provide an OpenAI API key through the application interface or environment configuration.
+To enable AI-assisted Account Intelligence and lightweight Outreach assistance, provide an OpenAI API key through the application interface or environment configuration.
 
 The deterministic scoring engine remains independent from the AI layer.
 
 ---
 
-## v2.0 Highlights
+# v2.0.0 Highlights
 
-Version 2.0 represents the transition from a fixed lead-scoring application toward a configurable Commercial Intelligence system.
+Version 2.0 represents the transition from a fixed lead-scoring application into a configurable Commercial Intelligence system.
 
-### Added
+## Added
 
 - Configurable Ideal Customer Profile
-- Priority Region Selection
-- Priority Industry Selection
-- Preferred Company Size Range
-- Five-Factor Commercial Scoring
-- Adjustable Scoring Priorities
-- Automatic Weight Normalization
-- Configurable Tier Thresholds
+- Priority Region selection
+- Priority Industry selection
+- Preferred Company Size range
+- Five-factor commercial scoring
+- Adjustable scoring priorities
+- Automatic weight normalization
+- Configurable Tier thresholds
 - Company Size Fit
-- Explainable Score Breakdown
-- Recommended Commercial Actions
-- Active ICP Visualization
-- Expanded Demonstration Dataset
-- AI Context Integration
-- Evidence-Aware AI Prompts
-- AI Outreach Guardrails
-- Local Non-API Fallback
-- Improved Executive Dashboard
+- Explainable score breakdown
+- Recommended commercial actions
+- Active ICP visualization
+- Expanded demonstration dataset
+- AI context integration
+- Evidence-aware AI prompts
+- Outreach guardrails
+- Local non-API fallback
+- Improved executive dashboard
+- Prioritized CSV export
+- Direct interoperability with Adaptive Outreach Intelligence
+- Product screenshots
+- Public v2.0.0 release
 
 ---
 
-## Roadmap
+# Commercial Intelligence Ecosystem
+
+This application forms part of the broader:
+
+## AI Business Development Toolkit
+
+[View Central Toolkit](https://github.com/Eambrosin/AI-Business-Development-Toolkit)
+
+The ecosystem follows:
+
+```text
+IDENTIFY
+Opportunity Discovery
+
+        ↓
+
+PRIORITIZE
+Lead Qualification & Revenue Prioritization
+← THIS APPLICATION
+
+        ↓
+
+ENGAGE
+Adaptive Outreach Intelligence
+
+        ↓
+
+PARTNER
+Partnership Opportunity Intelligence
+
+        ↓
+
+EXPAND
+Global Market Entry Intelligence
+```
+
+---
+
+# Current Ecosystem Status
+
+```text
+PRIORITIZE
+Lead Qualification & Revenue Prioritization
+v2.0.0
+✅ SHIPPED
+
+ENGAGE
+Adaptive Outreach Intelligence
+v2.0.0
+✅ SHIPPED
+
+PARTNER
+Partnership Opportunity Finder
+✅ SHIPPED / IMPROVING
+
+EXPAND
+Global Market Entry Intelligence
+🚧 IN DEVELOPMENT
+
+IDENTIFY
+Opportunity Discovery Intelligence
+📋 PLANNED
+```
+
+---
+
+# Roadmap
 
 Potential future development areas include:
 
@@ -660,17 +1045,23 @@ Potential future development areas include:
 - ICP presets
 - Account comparison
 - Commercial scenario simulation
-- Integration with the Outreach Intelligence platform
+- Scoring-performance analysis
+- Conversion feedback loops
+- Direct Outreach handoff
+- Shared account identifiers across products
+- Unified Commercial Intelligence dashboard
 
-The long-term direction is to connect this system with a broader Commercial Intelligence ecosystem covering:
+The long-term direction is to create a connected Commercial Intelligence workflow covering:
 
-**Identify → Prioritize → Engage → Partner → Expand**
+```text
+Identify → Prioritize → Engage → Partner → Expand
+```
 
 ---
 
-## Business Use Case
+# Business Use Case
 
-This project demonstrates how AI and deterministic Commercial Intelligence can work together to improve practical Business Development execution.
+This project demonstrates how deterministic Commercial Intelligence and AI can work together to improve practical Business Development execution.
 
 The application is designed around a simple principle:
 
@@ -678,25 +1069,27 @@ The application is designed around a simple principle:
 
 ---
 
-## Portfolio Positioning
+# Portfolio Positioning
 
 This is not a generic chatbot or AI demonstration.
 
 It is a practical Commercial Intelligence application focused on:
 
 - International Business Development
+- Lead Qualification
 - Revenue Prioritization
 - Strategic Partnerships
 - GTM Strategy
 - Revenue Operations
 - Market Expansion
+- Explainable Commercial Scoring
 - AI-Assisted Commercial Decision-Making
 
 It forms part of the broader **AI Business Development Toolkit** developed by Eduardo Ambrosin.
 
 ---
 
-## Author
+# Author
 
 **Eduardo Ambrosin**
 
