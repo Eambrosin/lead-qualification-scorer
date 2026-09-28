@@ -1038,7 +1038,8 @@ v2.0.0
 
 PARTNER
 Partnership Opportunity Finder
-✅ SHIPPED / IMPROVING
+v2.0.0
+✅ SHIPPED
 
 EXPAND
 Global Market Entry Intelligence
@@ -1048,6 +1049,23 @@ IDENTIFY
 Opportunity Discovery Intelligence
 📋 PLANNED
 ```
+
+---
+
+# Limitations & Intended Use
+
+This project is a **decision-support portfolio application**, not a predictive sales model or production CRM.
+
+Important boundaries:
+
+- scoring weights and thresholds are configurable commercial heuristics
+- the score is a prioritization aid, not a probability of closing
+- sample pipeline data is illustrative
+- AI-generated interpretation requires human review
+- no CRM write-back, contact enrichment or automated outbound is included
+- organizations should calibrate the scoring model against their own ICP, historical outcomes and commercial strategy
+
+These constraints are intentional and keep the project focused on explainable commercial prioritization.
 
 ---
 
