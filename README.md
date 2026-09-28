@@ -1052,6 +1052,12 @@ Opportunity Discovery Intelligence
 
 ---
 
+# Demo Data
+
+The bundled sample pipeline and exported example files are **synthetic demonstration data**, not client records or claims about real companies.
+
+---
+
 # Limitations & Intended Use
 
 This project is a **decision-support portfolio application**, not a predictive sales model or production CRM.
