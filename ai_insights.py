@@ -197,13 +197,19 @@ def _lead_context(lead):
 # OPENAI CLIENT
 # ----------------------------------------------------------------------
 
-def _has_api_key():
-    return bool(os.getenv("OPENAI_API_KEY"))
+def _has_api_key(api_key=None):
+    return bool(
+        api_key
+        or os.getenv("OPENAI_API_KEY")
+    )
 
 
-def _client():
+def _client(api_key=None):
     return OpenAI(
-        api_key=os.getenv("OPENAI_API_KEY")
+        api_key=(
+            api_key
+            or os.getenv("OPENAI_API_KEY")
+        )
     )
 
 
@@ -249,6 +255,7 @@ def _extract_response_text(response):
 def _generate_openai_text(
     system_prompt,
     user_prompt,
+    api_key=None,
 ):
     """
     Generate text using the Responses API when available.
@@ -258,7 +265,7 @@ def _generate_openai_text(
     the preferred model is unavailable for the account.
     """
 
-    client = _client()
+    client = _client(api_key)
 
     models_to_try = []
 
@@ -393,10 +400,10 @@ def _commercial_context_block(lead_data):
 # AI ACCOUNT INTELLIGENCE
 # ----------------------------------------------------------------------
 
-def generate_ai_insight(lead):
+def generate_ai_insight(lead, api_key=None):
     lead_data = _lead_context(lead)
 
-    if not _has_api_key():
+    if not _has_api_key(api_key):
         return _local_ai_insight(
             lead_data
         )
@@ -484,6 +491,7 @@ Tone:
         return _generate_openai_text(
             system_prompt,
             prompt,
+            api_key=api_key,
         )
 
     except Exception:
@@ -496,10 +504,10 @@ Tone:
 # AI OUTREACH
 # ----------------------------------------------------------------------
 
-def generate_outreach(lead):
+def generate_outreach(lead, api_key=None):
     lead_data = _lead_context(lead)
 
-    if not _has_api_key():
+    if not _has_api_key(api_key):
         return _local_outreach(
             lead_data
         )
@@ -588,6 +596,7 @@ Rules:
         return _generate_openai_text(
             system_prompt,
             prompt,
+            api_key=api_key,
         )
 
     except Exception:
