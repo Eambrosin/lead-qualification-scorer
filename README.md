@@ -247,6 +247,8 @@ The default v2.0 model evaluates five commercial dimensions.
 | Industry Fit | 20% |
 | Company Size Fit | 15% |
 | Deal Value | 25% |
+
+> **Deal Value note:** the current engine scores deal value relative to the highest-value opportunity in the active pipeline. It is therefore a portfolio-prioritization signal, not an absolute valuation model.
 | Engagement | 20% |
 
 Users can change the relative importance of each factor directly from the Streamlit interface.
