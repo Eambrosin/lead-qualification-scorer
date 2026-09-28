@@ -25,6 +25,12 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Validate Python syntax
+        run: |
+          python -m py_compile app.py
+          python -m py_compile lead_qualifier.py
+          python -m py_compile ai_insights.py
+
       - name: Run Lead Qualification tests
         env:
           PYTHONPATH: ${{ github.workspace }}
