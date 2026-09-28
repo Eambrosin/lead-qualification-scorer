@@ -687,22 +687,26 @@ with st.sidebar:
         "🤖 AI Settings"
     )
 
-    api_key_input = (
-        st.text_input(
-            "OpenAI API Key",
-            type="password",
-            value=os.getenv(
-                "OPENAI_API_KEY",
-                "",
-            ),
-        )
+    api_key_input = st.text_input(
+        "Optional OpenAI API Key",
+        type="password",
+        value="",
+        help=(
+            "Optional key for AI-assisted interpretation in this session. "
+            "It is not written into the process environment."
+        ),
     )
 
-    if api_key_input:
+    server_api_key = os.getenv(
+        "OPENAI_API_KEY",
+        "",
+    )
 
-        os.environ[
-            "OPENAI_API_KEY"
-        ] = api_key_input
+    active_api_key = (
+        api_key_input
+        or server_api_key
+        or None
+    )
 
     st.text_input(
         "Model",
@@ -713,10 +717,16 @@ with st.sidebar:
         disabled=True,
     )
 
-    st.caption(
-        "Without an API key, the scoring and prioritization "
-        "engine remains fully operational."
-    )
+    if server_api_key and not api_key_input:
+        st.caption(
+            "A server-side AI key is configured. "
+            "The deterministic scoring engine remains independent from AI."
+        )
+    else:
+        st.caption(
+            "Without an API key, the scoring and prioritization "
+            "engine remains fully operational."
+        )
 
 
 uploaded = st.file_uploader(
@@ -1708,7 +1718,8 @@ if uploaded is not None:
 
             insight = (
                 generate_ai_insight(
-                    lead_for_ai
+                    lead_for_ai,
+                    api_key=active_api_key,
                 )
             )
 
@@ -1749,7 +1760,8 @@ if uploaded is not None:
 
             outreach = (
                 generate_outreach(
-                    lead_for_ai
+                    lead_for_ai,
+                    api_key=active_api_key,
                 )
             )
 
