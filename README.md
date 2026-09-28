@@ -950,6 +950,8 @@ The application works without an API key.
 
 To enable AI-assisted Account Intelligence and lightweight Outreach assistance, provide an OpenAI API key through the application interface or environment configuration.
 
+A key entered in the interface is passed only to the AI call for the active Streamlit session and is not written into the process environment. Server-side deployments can instead use the `OPENAI_API_KEY` environment variable.
+
 The deterministic scoring engine remains independent from the AI layer.
 
 ---
