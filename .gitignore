@@ -9,3 +9,6 @@ ai_insights_backup.py
 ai_insights_before_stage_*.py
 README_before_premium.md
 requirements_full_backup.txt
+.venv/
+.env.*
+.streamlit/secrets.toml
