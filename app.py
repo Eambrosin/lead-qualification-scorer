@@ -1,8 +1,6 @@
 import html
 import json
 import os
-from pathlib import Path
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -18,8 +16,6 @@ st.set_page_config(
 )
 
 PLOTLY_CONFIG = {"displayModeBar": False, "responsive": True}
-EXPORTS_DIR = Path("exports")
-EXPORTS_DIR.mkdir(exist_ok=True)
 
 BASE_CONFIG = load_scoring_config()
 
@@ -137,13 +133,6 @@ def safe_filename(value):
         .replace("/", "_")
         .replace("\\", "_")
     )
-
-
-def save_ai_output(company_name, output_type, content):
-    filename = f"{safe_filename(company_name)}_{output_type}.txt"
-    path = EXPORTS_DIR / filename
-    path.write_text(content, encoding="utf-8")
-    return path
 
 
 def render_ai_output(title, content, icon="📌"):
@@ -1723,23 +1712,13 @@ if uploaded is not None:
                 )
             )
 
-            saved_path = (
-                save_ai_output(
-                    selected_row[
-                        "company_name"
-                    ],
-                    "ai_insight",
-                    insight,
-                )
-            )
-
             render_structured_ai_result(
                 insight,
                 mode="insight",
             )
 
-            st.success(
-                f"AI Insight saved to {saved_path}"
+            st.caption(
+                "Generated output is kept in memory and can be downloaded below."
             )
 
             st.download_button(
@@ -1765,23 +1744,13 @@ if uploaded is not None:
                 )
             )
 
-            saved_path = (
-                save_ai_output(
-                    selected_row[
-                        "company_name"
-                    ],
-                    "outreach_sequence",
-                    outreach,
-                )
-            )
-
             render_structured_ai_result(
                 outreach,
                 mode="outreach",
             )
 
-            st.success(
-                f"Outreach Sequence saved to {saved_path}"
+            st.caption(
+                "Generated output is kept in memory and can be downloaded below."
             )
 
             st.download_button(
