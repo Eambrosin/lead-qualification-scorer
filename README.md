@@ -7,6 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
 ![Commercial Intelligence](https://img.shields.io/badge/Commercial%20Intelligence-PRIORITIZE-8250df)
+[![Python CI](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml)
 
 A practical Commercial Intelligence application designed to help Business Development, Sales, Partnerships and GTM teams determine **which opportunities deserve attention, why they matter and what commercial action should happen next**.
 
@@ -814,6 +815,13 @@ lead-qualification-scorer/
 │
 ├── exports/
 │
+├── tests/
+│   └── test_lead_qualifier.py
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
 └── screenshots/
     ├── v2-executive-summary.png
     ├── v2-executive-dashboard.png
@@ -867,6 +875,20 @@ Optional qualitative intelligence layer responsible for:
 - GTM recommendations
 - Discovery questions
 - Outreach assistance
+
+---
+
+# Testing
+
+The deterministic qualification engine is covered by unit tests for core scoring, ICP-fit behavior, tier boundaries, input validation and pipeline ranking.
+
+Run locally with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions runs the same test suite automatically on pushes and pull requests.
 
 ---
 
