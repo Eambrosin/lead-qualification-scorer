@@ -717,6 +717,12 @@ with st.sidebar:
             "engine remains fully operational."
         )
 
+    if active_api_key:
+        st.caption(
+            "When AI features are used, the selected account context is sent to OpenAI "
+            "for generation. Avoid uploading or sending sensitive personal or confidential data."
+        )
+
 
 uploaded = st.file_uploader(
     "Upload Pipeline CSV",
