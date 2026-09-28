@@ -956,6 +956,8 @@ A key entered in the interface is passed only to the AI call for the active Stre
 
 AI-generated outputs are kept in memory for display/download and are not written to the application server by the Streamlit interface.
 
+When AI features are enabled, the selected account context is sent to OpenAI for generation. Users should avoid submitting sensitive personal or confidential information.
+
 The deterministic scoring engine remains independent from the AI layer.
 
 ---
