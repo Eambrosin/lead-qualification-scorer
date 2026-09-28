@@ -946,9 +946,11 @@ streamlit run app.py
 
 ---
 
-# Optional OpenAI Configuration
+# Optional AI Configuration
 
 The application works without an API key.
+
+The **Streamlit interface uses OpenAI** for optional account interpretation and outreach assistance. The standalone `lead_qualifier.py` CLI also retains an optional **Anthropic** enrichment path when `ANTHROPIC_API_KEY` is configured. In both cases, deterministic scoring remains the source of truth.
 
 To enable AI-assisted Account Intelligence and lightweight Outreach assistance, provide an OpenAI API key through the application interface or environment configuration.
 
