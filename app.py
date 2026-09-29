@@ -27,6 +27,7 @@ def build_runtime_config(
     preferred_industries,
     minimum_company_size,
     maximum_company_size,
+    upstream_fit_priority,
     region_priority,
     industry_priority,
     company_size_priority,
@@ -57,6 +58,7 @@ def build_runtime_config(
     }
 
     raw_priorities = {
+        "upstream_fit": float(upstream_fit_priority),
         "region": float(region_priority),
         "industry": float(industry_priority),
         "company_size": float(company_size_priority),
@@ -539,6 +541,19 @@ with st.sidebar:
             "They are automatically normalized to 100%."
         )
 
+        upstream_fit_priority = st.slider(
+            "Upstream account fit",
+            min_value=0,
+            max_value=100,
+            value=int(icp_profile["weights"].get("upstream_fit", 0)),
+            step=5,
+            key=f"upstream_fit_priority_{icp_key}",
+            help=(
+                "Uses Account Opportunity Score from Territory Intelligence "
+                "or Discovery Score when available."
+            ),
+        )
+
         region_priority = st.slider(
             "Region fit",
             min_value=0,
@@ -622,6 +637,9 @@ with st.sidebar:
                 maximum_company_size=(
                     maximum_company_size
                 ),
+                upstream_fit_priority=(
+                    upstream_fit_priority
+                ),
                 region_priority=(
                     region_priority
                 ),
@@ -667,6 +685,7 @@ with st.sidebar:
     st.caption(
         " · ".join(
             [
+                f"Upstream Fit {effective_weights.get('upstream_fit', 0):.0%}",
                 f"Region {effective_weights['region']:.0%}",
                 f"Industry {effective_weights['industry']:.0%}",
                 f"Company Size {effective_weights['company_size']:.0%}",
