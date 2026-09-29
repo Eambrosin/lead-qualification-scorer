@@ -766,6 +766,17 @@ if uploaded is not None:
                 errors="coerce",
             )
 
+        if "source_stage" in source_df.columns:
+            upstream_stages = sorted(
+                source_df["source_stage"].dropna().astype(str).unique().tolist()
+            )
+            if upstream_stages:
+                st.caption(
+                    "Integrated pipeline source: "
+                    + ", ".join(upstream_stages)
+                    + ". Upstream metadata is preserved through qualification."
+                )
+
         df = rank_leads(
             source_df,
             config=runtime_config,
@@ -1884,6 +1895,31 @@ if uploaded is not None:
     st.plotly_chart(
         fig_country,
         config=PLOTLY_CONFIG,
+    )
+
+    st.divider()
+
+    # ------------------------------------------------------------------
+    # ENGAGE HANDOFF
+    # ------------------------------------------------------------------
+
+    st.subheader(
+        "🔗 Continue to ENGAGE"
+    )
+
+    st.caption(
+        "Export the complete qualified pipeline for the Adaptive Outreach Intelligence app. "
+        "Market-profile, contact and public-source metadata are preserved when available."
+    )
+
+    engage_handoff = df.copy()
+    engage_handoff["source_stage"] = "PRIORITIZE"
+
+    st.download_button(
+        "⬇ Download ENGAGE Handoff CSV",
+        engage_handoff.to_csv(index=False).encode("utf-8"),
+        "engage_handoff.csv",
+        "text/csv",
     )
 
     st.divider()
