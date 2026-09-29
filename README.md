@@ -267,6 +267,16 @@ These fields provide commercial context but do not automatically increase deal v
 
 Unknown commercial fields remain excluded from scoring until verified.
 
+### Upstream Research Readiness
+
+PRIORITIZE also preserves the research-readiness status created in IDENTIFY:
+
+- Ready for Qualification
+- Enrich Before Qualification
+- Research Required
+
+Research readiness is shown separately from the commercial qualification score. It measures evidence completeness and is not used as a proxy for win probability, revenue potential or buying intent.
+
 ---
 
 # ⚖️ Configurable Scoring Model
