@@ -1192,67 +1192,79 @@ if uploaded is not None:
 
         st.metric(
             "Top Revenue Opportunity",
-            top_revenue[
-                "company_name"
-            ],
-            f"${top_revenue['estimated_deal_value_usd']:,.0f}",
+            (
+                top_revenue["company_name"]
+                if top_revenue is not None
+                else "Not qualified"
+            ),
+            (
+                "$" + f"{top_revenue['estimated_deal_value_usd']:,.0f}"
+                if top_revenue is not None
+                else "Deal values unknown"
+            ),
         )
 
         st.metric(
             "Fastest Path To Revenue",
-            fastest_path_account[
-                "company_name"
-            ],
-            f"Score {fastest_path_account['score']}",
+            (
+                fastest_path_account["company_name"]
+                if fastest_path_account is not None
+                else "Not established"
+            ),
+            (
+                f"Score {fastest_path_account['score']}"
+                if fastest_path_account is not None
+                else "Engagement unverified"
+            ),
         )
 
     with exec_col_2:
 
         st.metric(
             "Top Strategic Opportunity",
-            top_partnership[
-                "company_name"
-            ],
+            top_partnership["company_name"],
             f"Tier {top_partnership['tier']}",
         )
 
         st.metric(
             "Top Expansion Opportunity",
-            top_expansion_account[
-                "company_name"
-            ],
-            top_expansion_account[
-                "region"
-            ],
+            top_expansion_account["company_name"],
+            top_expansion_account["region"],
         )
 
     with exec_col_3:
 
         st.metric(
             "Highest Engagement Risk",
-            highest_risk[
-                "company_name"
-            ],
-            str(
-                highest_risk[
-                    "engagement_signal"
-                ]
-            ).title(),
+            (
+                highest_risk["company_name"]
+                if highest_risk is not None
+                else "Not established"
+            ),
+            (
+                str(highest_risk["engagement_signal"]).title()
+                if highest_risk is not None
+                else "Engagement unverified"
+            ),
         )
 
-        tier_a_pipeline = (
-            df[
-                df["tier"]
-                == "A"
-            ][
-                "estimated_deal_value_usd"
-            ].sum()
-        )
+        tier_a_verified = df[
+            (df["tier"] == "A")
+            & verified_deal_mask
+        ]
+        tier_a_pipeline = pd.to_numeric(
+            tier_a_verified["estimated_deal_value_usd"],
+            errors="coerce",
+        ).fillna(0).sum()
 
         st.metric(
-            "Tier A Pipeline",
-            f"${tier_a_pipeline:,.0f}",
-            f"{len(df[df['tier'] == 'A'])} accounts",
+            "Tier A Qualified Pipeline",
+            (
+                "$" + f"{tier_a_pipeline:,.0f}"
+                if tier_a_pipeline > 0
+                else "Not qualified"
+            ),
+            f"{len(df[df['tier'] == 'A'])} fit-priority accounts",
         )
 
     st.markdown(
