@@ -1384,10 +1384,14 @@ if uploaded is not None:
             "company_size"
         )
 
+    if "account_opportunity_score" in priority_df.columns:
+        priority_columns.append(
+            "account_opportunity_score"
+        )
+
     priority_columns.extend(
         [
             "estimated_deal_value_usd",
-            "account_opportunity_score",
             "score",
             "qualification_completeness",
             "qualification_status",
@@ -1441,12 +1445,16 @@ if uploaded is not None:
             "company_size"
         )
 
+    if "account_opportunity_score" in df.columns:
+        top_columns.append(
+            "account_opportunity_score"
+        )
+
     top_columns.extend(
         [
             "estimated_deal_value_usd",
             "engagement_signal",
             "engagement_status",
-            "account_opportunity_score",
             "score",
             "qualification_completeness",
             "qualification_status",
