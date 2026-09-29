@@ -1923,6 +1923,12 @@ if uploaded is not None:
         "text/csv",
     )
 
+    st.link_button(
+        "Open ENGAGE — Adaptive Outreach",
+        "https://outreach-sequence-generator-7dcmglcxfnmszlodg8lqre.streamlit.app/",
+        use_container_width=True,
+    )
+
     st.divider()
 
     # ------------------------------------------------------------------
