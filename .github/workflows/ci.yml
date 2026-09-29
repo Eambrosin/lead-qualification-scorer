@@ -31,6 +31,7 @@ jobs:
           python -m py_compile lead_qualifier.py
           python -m py_compile ai_insights.py
           python -m py_compile qualification_profiles.py
+          python -m py_compile integrated_scoring.py
 
       - name: Run Lead Qualification tests
         env:
