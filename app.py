@@ -885,6 +885,112 @@ if uploaded is not None:
                         f"Market profile aligned across apps: {upstream_profile}."
                     )
 
+        if (
+            "source_stage" in source_df.columns
+            and source_df["source_stage"].fillna("").astype(str).eq("IDENTIFY").any()
+        ):
+            st.markdown("### ✍️ Qualification Enrichment")
+            st.caption(
+                "Optional: enrich commercial fields discovered upstream. "
+                "Unknown values remain excluded from the score until you verify them."
+            )
+
+            if "deal_value_status" not in source_df.columns:
+                source_df["deal_value_status"] = "unknown"
+            if "engagement_status" not in source_df.columns:
+                source_df["engagement_status"] = "unverified"
+            if "company_size_status" not in source_df.columns:
+                source_df["company_size_status"] = source_df["company_size"].apply(
+                    lambda value: "observed" if pd.notna(value) else "unknown"
+                )
+
+            editor_columns = [
+                "company_name",
+                "territory_region",
+                "territory_province",
+                "territory_city",
+                "company_size",
+                "estimated_deal_value_usd",
+                "engagement_signal",
+            ]
+            editor_columns = [
+                column
+                for column in editor_columns
+                if column in source_df.columns
+            ]
+
+            with st.expander(
+                "Edit company size, deal value or engagement",
+                expanded=False,
+            ):
+                enriched_view = st.data_editor(
+                    source_df[editor_columns],
+                    hide_index=True,
+                    use_container_width=True,
+                    disabled=[
+                        column
+                        for column in [
+                            "company_name",
+                            "territory_region",
+                            "territory_province",
+                            "territory_city",
+                        ]
+                        if column in editor_columns
+                    ],
+                    column_config={
+                        "engagement_signal": st.column_config.SelectboxColumn(
+                            "Engagement",
+                            options=["", "cold", "warm", "hot"],
+                        ),
+                        "estimated_deal_value_usd": st.column_config.NumberColumn(
+                            "Estimated Deal Value (USD)",
+                            min_value=0.0,
+                            step=1000.0,
+                        ),
+                        "company_size": st.column_config.NumberColumn(
+                            "Employees",
+                            min_value=0,
+                            step=1,
+                        ),
+                    },
+                    key="qualification_enrichment_editor",
+                )
+
+                for column in [
+                    "company_size",
+                    "estimated_deal_value_usd",
+                    "engagement_signal",
+                ]:
+                    if column in enriched_view.columns:
+                        source_df.loc[enriched_view.index, column] = enriched_view[column]
+
+                source_df["estimated_deal_value_usd"] = pd.to_numeric(
+                    source_df["estimated_deal_value_usd"],
+                    errors="coerce",
+                ).fillna(0)
+
+                source_df.loc[
+                    source_df["estimated_deal_value_usd"] > 0,
+                    "deal_value_status",
+                ] = "verified"
+
+                source_df.loc[
+                    source_df["engagement_signal"]
+                    .fillna("")
+                    .astype(str)
+                    .str.lower()
+                    .isin(["cold", "warm", "hot"]),
+                    "engagement_status",
+                ] = "verified"
+
+                source_df.loc[
+                    pd.to_numeric(
+                        source_df["company_size"],
+                        errors="coerce",
+                    ).notna(),
+                    "company_size_status",
+                ] = "observed"
+
         df = rank_integrated_leads(
             source_df,
             config=runtime_config,
