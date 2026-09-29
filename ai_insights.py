@@ -459,6 +459,7 @@ Do NOT:
 - contradict the scoring rationale without clearly identifying a limitation in the available data
 - pretend to know facts about the company that are not included in the supplied account data
 - fabricate market research, financial data, decision makers or company initiatives
+- treat unknown or unverified fields as zero, cold, negative, or confirmed
 
 You may:
 - explain what the supplied commercial signals imply
