@@ -56,6 +56,7 @@ INDUSTRY_SCORES = {
     "Fintech": 85,
     "Real Estate": 80,
     "Logistics & Trade": 70,
+    "Medical Aesthetics": 95,
     "Other": 30,
 }
 
@@ -84,6 +85,24 @@ REQUIRED_COLUMNS = {
     "industry",
     "estimated_deal_value_usd",
     "engagement_signal",
+}
+
+
+REGION_ALIASES = {
+    "Europe": "EU",
+    "European Union": "EU",
+    "EU": "EU",
+    "Latin America": "LATAM",
+    "LATAM": "LATAM",
+    "Middle East": "MENA",
+    "Middle East & North Africa": "MENA",
+    "MENA": "MENA",
+    "North America": "NA",
+    "NA": "NA",
+    "Africa": "AFRICA",
+    "AFRICA": "AFRICA",
+    "Asia Pacific": "APAC",
+    "APAC": "APAC",
 }
 
 
@@ -438,9 +457,14 @@ def score_components(
         COMPANY_SIZE_RANGE,
     )
 
-    region = str(
+    region_raw = str(
         row["region"]
     ).strip()
+
+    region = REGION_ALIASES.get(
+        region_raw,
+        region_raw,
+    )
 
     industry = str(
         row["industry"]
