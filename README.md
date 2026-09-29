@@ -251,6 +251,24 @@ When an upstream export contains `market_profile_id`, the app checks whether the
 
 ---
 
+## Integrated Account Enrichment
+
+When a pipeline originates in Opportunity Discovery Intelligence, PRIORITIZE preserves upstream public-account evidence including:
+
+- direct account website
+- website evidence status
+- public phone, email and address
+- Account Data Completeness
+- enrichment status
+- territory and technology context
+- public decision-maker candidate evidence when available
+
+These fields provide commercial context but do not automatically increase deal value, engagement or revenue qualification.
+
+Unknown commercial fields remain excluded from scoring until verified.
+
+---
+
 # ⚖️ Configurable Scoring Model
 
 The default v2.0 model evaluates five commercial dimensions.
