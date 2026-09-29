@@ -7,6 +7,7 @@ import streamlit as st
 
 from ai_insights import generate_ai_insight, generate_outreach
 from lead_qualifier import load_scoring_config, rank_leads
+from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
 
 
 st.set_page_config(
@@ -121,6 +122,16 @@ def prepare_lead_for_ai(
         "company_size_range": runtime_config["company_size_range"],
         "scoring_weights": runtime_config["weights"],
         "tier_thresholds": runtime_config["tier_thresholds"],
+        "market_profile_id": row.get("market_profile_id", ""),
+        "territory_profile_id": row.get("territory_profile_id", ""),
+        "territory_region": row.get("territory_region", ""),
+        "territory_province": row.get("territory_province", ""),
+        "territory_city": row.get("territory_city", ""),
+        "account_opportunity_score": row.get("account_opportunity_score", ""),
+        "territory_status": row.get("territory_status", ""),
+        "professional_setting": row.get("professional_setting", ""),
+        "observed_technology_axes": row.get("observed_technology_axes", ""),
+        "technology_validation_questions": row.get("technology_validation_questions", ""),
     }
 
 
@@ -422,6 +433,21 @@ with st.sidebar:
         "or reviewing your pipeline."
     )
 
+    icp_profile_name = st.selectbox(
+        "ICP preset",
+        list(QUALIFICATION_PROFILES.keys()),
+        help=(
+            "Presets align qualification with the same market profiles used "
+            "across the Commercial Intelligence suite. Every setting remains editable."
+        ),
+    )
+    icp_profile = get_qualification_profile(icp_profile_name)
+    icp_profile_id = icp_profile["profile_id"]
+    icp_key = icp_profile_id.replace("/", "_")
+
+    if icp_profile.get("note"):
+        st.info(icp_profile["note"])
+
     region_options = list(
         BASE_CONFIG[
             "region_scores"
@@ -438,9 +464,11 @@ with st.sidebar:
         "Priority regions",
         options=region_options,
         default=[
-            "LATAM",
-            "MENA",
+            region
+            for region in icp_profile["preferred_regions"]
+            if region in region_options
         ],
+        key=f"preferred_regions_{icp_key}",
         help=(
             "Selected regions receive "
             "the maximum Region Fit score."
@@ -451,10 +479,11 @@ with st.sidebar:
         "Priority industries",
         options=industry_options,
         default=[
-            "Agribusiness",
-            "Renewable Energy",
-            "Government / Public Sector",
+            industry
+            for industry in icp_profile["preferred_industries"]
+            if industry in industry_options
         ],
+        key=f"preferred_industries_{icp_key}",
         help=(
             "Selected industries receive "
             "the maximum Industry Fit score."
@@ -475,12 +504,9 @@ with st.sidebar:
             st.number_input(
                 "Minimum employees",
                 min_value=0,
-                value=int(
-                    BASE_CONFIG[
-                        "company_size_range"
-                    ]["min"]
-                ),
+                value=int(icp_profile["min_company_size"]),
                 step=10,
+                key=f"minimum_company_size_{icp_key}",
             )
         )
 
@@ -490,12 +516,9 @@ with st.sidebar:
             st.number_input(
                 "Maximum employees",
                 min_value=1,
-                value=int(
-                    BASE_CONFIG[
-                        "company_size_range"
-                    ]["max"]
-                ),
+                value=int(icp_profile["max_company_size"]),
                 step=50,
+                key=f"maximum_company_size_{icp_key}",
             )
         )
 
@@ -519,65 +542,45 @@ with st.sidebar:
             "Region fit",
             min_value=0,
             max_value=100,
-            value=int(
-                BASE_CONFIG[
-                    "weights"
-                ]["region"]
-                * 100
-            ),
+            value=int(icp_profile["weights"]["region"]),
             step=5,
+            key=f"region_priority_{icp_key}",
         )
 
         industry_priority = st.slider(
             "Industry fit",
             min_value=0,
             max_value=100,
-            value=int(
-                BASE_CONFIG[
-                    "weights"
-                ]["industry"]
-                * 100
-            ),
+            value=int(icp_profile["weights"]["industry"]),
             step=5,
+            key=f"industry_priority_{icp_key}",
         )
 
         company_size_priority = st.slider(
             "Company size fit",
             min_value=0,
             max_value=100,
-            value=int(
-                BASE_CONFIG[
-                    "weights"
-                ]["company_size"]
-                * 100
-            ),
+            value=int(icp_profile["weights"]["company_size"]),
             step=5,
+            key=f"company_size_priority_{icp_key}",
         )
 
         deal_value_priority = st.slider(
             "Deal value",
             min_value=0,
             max_value=100,
-            value=int(
-                BASE_CONFIG[
-                    "weights"
-                ]["deal_value"]
-                * 100
-            ),
+            value=int(icp_profile["weights"]["deal_value"]),
             step=5,
+            key=f"deal_value_priority_{icp_key}",
         )
 
         engagement_priority = st.slider(
             "Engagement",
             min_value=0,
             max_value=100,
-            value=int(
-                BASE_CONFIG[
-                    "weights"
-                ]["engagement"]
-                * 100
-            ),
+            value=int(icp_profile["weights"]["engagement"]),
             step=5,
+            key=f"engagement_priority_{icp_key}",
         )
 
     with st.expander(
@@ -590,6 +593,7 @@ with st.sidebar:
             max_value=95,
             value=75,
             step=1,
+            key=f"tier_a_threshold_{icp_key}",
         )
 
         tier_b_threshold = st.slider(
@@ -598,6 +602,7 @@ with st.sidebar:
             max_value=80,
             value=50,
             step=1,
+            key=f"tier_b_threshold_{icp_key}",
         )
 
     try:
@@ -777,6 +782,28 @@ if uploaded is not None:
                     + ". Upstream metadata is preserved through qualification."
                 )
 
+        if "market_profile_id" in source_df.columns:
+            upstream_profiles = sorted(
+                source_df["market_profile_id"]
+                .dropna()
+                .astype(str)
+                .loc[lambda values: values.str.strip() != ""]
+                .unique()
+                .tolist()
+            )
+            if upstream_profiles:
+                upstream_profile = upstream_profiles[0]
+                if upstream_profile != icp_profile_id:
+                    st.warning(
+                        f"Upstream market profile is '{upstream_profile}', while the active "
+                        f"ICP preset is '{icp_profile_id}'. Review the ICP settings before "
+                        "using the resulting ranking."
+                    )
+                else:
+                    st.success(
+                        f"Market profile aligned across apps: {upstream_profile}."
+                    )
+
         df = rank_leads(
             source_df,
             config=runtime_config,
@@ -829,6 +856,61 @@ if uploaded is not None:
             ]
         ),
     )
+
+    if "territory_region" in df.columns:
+        territory_rows = df[
+            df["territory_region"].fillna("").astype(str).str.strip() != ""
+        ].copy()
+
+        if not territory_rows.empty:
+            st.markdown("### 🗺️ Territory Qualification View")
+
+            tq1, tq2, tq3, tq4 = st.columns(4)
+            tq1.metric("Mapped Accounts", len(territory_rows))
+            tq2.metric(
+                "Tier A in Territory",
+                int((territory_rows["tier"] == "A").sum()),
+            )
+            tq3.metric(
+                "Find Decision Maker",
+                int(
+                    (
+                        territory_rows.get(
+                            "territory_status",
+                            pd.Series(dtype=str),
+                        ).astype(str)
+                        == "Find Decision Maker"
+                    ).sum()
+                ),
+            )
+            tq4.metric(
+                "Eligibility Validation",
+                int(
+                    (
+                        territory_rows.get(
+                            "territory_status",
+                            pd.Series(dtype=str),
+                        ).astype(str)
+                        == "Eligibility Validation"
+                    ).sum()
+                ),
+            )
+
+            territory_group = (
+                territory_rows.groupby("territory_region", dropna=False)
+                .agg(
+                    accounts=("company_name", "count"),
+                    tier_a=("tier", lambda values: int((values == "A").sum())),
+                    average_score=("score", "mean"),
+                )
+                .reset_index()
+            )
+            territory_group["average_score"] = territory_group["average_score"].round(1)
+            st.dataframe(
+                territory_group,
+                hide_index=True,
+                use_container_width=True,
+            )
 
     with st.expander(
         "⚙️ Active ICP & Scoring Model"
