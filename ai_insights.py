@@ -660,13 +660,19 @@ def _local_ai_insight(lead):
     country = lead["country"]
     region = lead["region"]
 
-    deal_value = _format_money(
-        lead["deal_value"]
+    deal_value = (
+        _format_money(lead["deal_value"])
+        if str(lead.get("deal_value_status", "")).lower()
+        not in {"", "unknown", "unverified"}
+        else "Not yet qualified"
     )
 
-    engagement = lead[
-        "engagement_signal"
-    ]
+    engagement = (
+        lead["engagement_signal"]
+        if str(lead.get("engagement_status", "")).lower()
+        not in {"", "unknown", "unverified"}
+        else "Not yet verified"
+    )
 
     score = lead["score"]
     tier = lead["tier"]
@@ -728,13 +734,19 @@ def _local_outreach(lead):
     country = lead["country"]
     region = lead["region"]
 
-    deal_value = _format_money(
-        lead["deal_value"]
+    deal_value = (
+        _format_money(lead["deal_value"])
+        if str(lead.get("deal_value_status", "")).lower()
+        not in {"", "unknown", "unverified"}
+        else "Not yet qualified"
     )
 
-    engagement = lead[
-        "engagement_signal"
-    ]
+    engagement = (
+        lead["engagement_signal"]
+        if str(lead.get("engagement_status", "")).lower()
+        not in {"", "unknown", "unverified"}
+        else "Not yet verified"
+    )
 
     score = lead["score"]
     tier = lead["tier"]
