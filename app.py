@@ -1097,6 +1097,58 @@ if uploaded is not None:
         ),
     )
 
+    if "qualification_readiness_status" in df.columns:
+        st.markdown("### 🧪 Upstream Research Readiness")
+        ur1, ur2, ur3, ur4 = st.columns(4)
+        ur1.metric(
+            "Ready for Qualification",
+            int(
+                (
+                    df["qualification_readiness_status"]
+                    .fillna("")
+                    .astype(str)
+                    == "Ready for Qualification"
+                ).sum()
+            ),
+        )
+        ur2.metric(
+            "Enrich First",
+            int(
+                (
+                    df["qualification_readiness_status"]
+                    .fillna("")
+                    .astype(str)
+                    == "Enrich Before Qualification"
+                ).sum()
+            ),
+        )
+        ur3.metric(
+            "Research Required",
+            int(
+                (
+                    df["qualification_readiness_status"]
+                    .fillna("")
+                    .astype(str)
+                    == "Research Required"
+                ).sum()
+            ),
+        )
+        readiness_values = pd.to_numeric(
+            df.get(
+                "qualification_readiness_score",
+                pd.Series([0] * len(df)),
+            ),
+            errors="coerce",
+        ).fillna(0)
+        ur4.metric(
+            "Average Research Readiness",
+            f"{readiness_values.mean():.0f}/100",
+        )
+        st.caption(
+            "This is inherited from IDENTIFY and measures research completeness, "
+            "not lead fit, revenue probability or qualification outcome."
+        )
+
     if "territory_region" in df.columns:
         territory_rows = df[
             df["territory_region"].fillna("").astype(str).str.strip() != ""
@@ -1549,6 +1601,14 @@ if uploaded is not None:
             "account_opportunity_score"
         )
 
+    if "qualification_readiness_score" in priority_df.columns:
+        priority_columns.extend(
+            [
+                "qualification_readiness_score",
+                "qualification_readiness_status",
+            ]
+        )
+
     priority_columns.extend(
         [
             "estimated_deal_value_usd",
@@ -1608,6 +1668,14 @@ if uploaded is not None:
     if "account_opportunity_score" in df.columns:
         top_columns.append(
             "account_opportunity_score"
+        )
+
+    if "qualification_readiness_score" in df.columns:
+        top_columns.extend(
+            [
+                "qualification_readiness_score",
+                "qualification_readiness_status",
+            ]
         )
 
     top_columns.extend(
@@ -1797,6 +1865,30 @@ if uploaded is not None:
                 f"**Upstream Account Opportunity:** "
                 f"{selected_row.get('account_opportunity_score')}"
             )
+
+        if (
+            "qualification_readiness_status" in selected_row.index
+            and str(
+                selected_row.get(
+                    "qualification_readiness_status",
+                    "",
+                )
+            ).strip()
+        ):
+            st.write(
+                f"**Upstream Research Readiness:** "
+                f"{selected_row.get('qualification_readiness_status', '')}"
+            )
+            if pd.notna(
+                selected_row.get(
+                    "qualification_readiness_score",
+                    pd.NA,
+                )
+            ):
+                st.caption(
+                    f"Research completeness: "
+                    f"{safe_optional_number(selected_row.get('qualification_readiness_score')):.0f}/100"
+                )
 
         if (
             "territory_status" in selected_row.index
