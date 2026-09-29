@@ -1095,105 +1095,94 @@ if uploaded is not None:
         "where to focus commercial effort first."
     )
 
+    verified_deal_accounts = df[
+        verified_deal_mask
+        & (
+            pd.to_numeric(
+                df["estimated_deal_value_usd"],
+                errors="coerce",
+            ).fillna(0)
+            > 0
+        )
+    ].copy()
+
     top_revenue = (
-        df.sort_values(
+        verified_deal_accounts.sort_values(
             "estimated_deal_value_usd",
             ascending=False,
         ).iloc[0]
+        if not verified_deal_accounts.empty
+        else None
     )
 
     top_partnership = (
         df.sort_values(
-            [
-                "score",
-                "estimated_deal_value_usd",
-            ],
-            ascending=[
-                False,
-                False,
-            ],
+            ["score", "qualification_completeness"],
+            ascending=[False, False],
         ).iloc[0]
     )
 
-    expansion_regions = (
-        preferred_regions
-        or [
-            "LATAM",
-            "MENA",
-            "AFRICA",
-        ]
-    )
-
+    expansion_regions = preferred_regions or ["LATAM", "MENA", "AFRICA"]
     top_expansion = (
-        df[
-            df["region"].isin(
-                expansion_regions
-            )
-        ]
+        df[df["region"].isin(expansion_regions)]
         .sort_values(
-            "score",
-            ascending=False,
+            ["score", "qualification_completeness"],
+            ascending=[False, False],
         )
     )
+    top_expansion_account = (
+        top_expansion.iloc[0]
+        if len(top_expansion) > 0
+        else df.sort_values(
+            ["score", "qualification_completeness"],
+            ascending=[False, False],
+        ).iloc[0]
+    )
 
-    if len(
-        top_expansion
-    ) > 0:
-
-        top_expansion_account = (
-            top_expansion.iloc[0]
-        )
-
-    else:
-
-        top_expansion_account = (
-            df.sort_values(
-                "score",
-                ascending=False,
-            ).iloc[0]
-        )
+    verified_engagement = df.copy()
+    if "engagement_status" in verified_engagement.columns:
+        verified_engagement = verified_engagement[
+            ~verified_engagement["engagement_status"]
+            .fillna("")
+            .astype(str)
+            .str.lower()
+            .isin(["", "unknown", "unverified"])
+        ]
 
     highest_risk = (
-        get_highest_risk_account(
-            df
-        )
+        get_highest_risk_account(verified_engagement)
+        if not verified_engagement.empty
+        else None
     )
 
     fastest_path = df[
-        (
-            df["tier"]
-            == "A"
-        )
-        &
-        (
-            df[
-                "engagement_signal"
-            ]
+        (df["tier"] == "A")
+        & (
+            df.get(
+                "engagement_status",
+                pd.Series([""] * len(df)),
+            )
+            .fillna("")
             .astype(str)
             .str.lower()
-            == "hot"
+            .eq("verified")
+        )
+        & (
+            df["engagement_signal"]
+            .astype(str)
+            .str.lower()
+            .isin(["hot", "warm"])
         )
     ]
 
-    if len(
-        fastest_path
-    ) > 0:
-
-        fastest_path_account = (
-            fastest_path.sort_values(
-                "score",
-                ascending=False,
-            ).iloc[0]
-        )
-
-    else:
-
-        fastest_path_account = (
-            df.sort_values(
-                "score",
-                ascending=False,
-            ).iloc[0]
-        )
+    fastest_path_account = (
+        fastest_path.sort_values(
+            ["score", "qualification_completeness"],
+            ascending=[False, False],
+        ).iloc[0]
+        if len(fastest_path) > 0
+        else None
+    )
 
     exec_col_1, exec_col_2, exec_col_3 = (
         st.columns(3)
