@@ -1454,7 +1454,16 @@ if uploaded is not None:
         [
             "estimated_deal_value_usd",
             "engagement_signal",
-            "engagement_status",
+        ]
+    )
+
+    if "engagement_status" in df.columns:
+        top_columns.append(
+            "engagement_status"
+        )
+
+    top_columns.extend(
+        [
             "score",
             "qualification_completeness",
             "qualification_status",
