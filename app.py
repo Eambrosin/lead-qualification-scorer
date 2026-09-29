@@ -2082,33 +2082,37 @@ if uploaded is not None:
             "💰 Revenue by Tier"
         )
 
-        revenue_by_tier = (
-            df.groupby(
-                "tier"
-            )[
-                "estimated_deal_value_usd"
-            ]
-            .sum()
-            .reset_index()
-        )
+        verified_revenue_df = df[verified_deal_mask].copy()
+        verified_revenue_df["estimated_deal_value_usd"] = pd.to_numeric(
+            verified_revenue_df["estimated_deal_value_usd"],
+            errors="coerce",
+        ).fillna(0)
+        verified_revenue_df = verified_revenue_df[
+            verified_revenue_df["estimated_deal_value_usd"] > 0
+        ]
 
-        fig_revenue = (
-            px.bar(
+        if verified_revenue_df.empty:
+            st.info(
+                "Revenue by Tier is hidden until at least one deal value is qualified."
+            )
+        else:
+            revenue_by_tier = (
+                verified_revenue_df.groupby("tier")["estimated_deal_value_usd"]
+                .sum()
+                .reset_index()
+            )
+
+            fig_revenue = px.bar(
                 revenue_by_tier,
                 x="tier",
-                y=(
-                    "estimated_deal_value_usd"
-                ),
-                title=(
-                    "Revenue Potential by Tier"
-                ),
+                y="estimated_deal_value_usd",
+                title="Qualified Revenue Potential by Tier",
             )
-        )
 
-        st.plotly_chart(
-            fig_revenue,
-            config=PLOTLY_CONFIG,
-        )
+            st.plotly_chart(
+                fig_revenue,
+                config=PLOTLY_CONFIG,
+            )
 
     st.divider()
 
