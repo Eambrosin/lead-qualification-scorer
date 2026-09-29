@@ -6,7 +6,8 @@ import plotly.express as px
 import streamlit as st
 
 from ai_insights import generate_ai_insight, generate_outreach
-from lead_qualifier import load_scoring_config, rank_leads
+from integrated_scoring import rank_integrated_leads
+from lead_qualifier import load_scoring_config
 from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
 
 
@@ -804,7 +805,7 @@ if uploaded is not None:
                         f"Market profile aligned across apps: {upstream_profile}."
                     )
 
-        df = rank_leads(
+        df = rank_integrated_leads(
             source_df,
             config=runtime_config,
         )
