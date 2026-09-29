@@ -98,7 +98,7 @@ def score_integrated_components(
     config: dict,
 ) -> dict:
     weights = config["weights"].copy()
-    weights.setdefault("upstream_fit", 0.0)
+    weights.setdefault("upstream_fit", 0.30)
 
     region_raw = _text(row.get("region"))
     region = REGION_ALIASES.get(region_raw, region_raw)
