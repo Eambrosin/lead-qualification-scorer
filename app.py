@@ -1908,32 +1908,30 @@ if uploaded is not None:
         )
 
         engagement = str(
-            selected_row[
-                "engagement_signal"
-            ]
+            selected_row.get("engagement_signal", "")
         ).lower()
+        engagement_verified = str(
+            selected_row.get("engagement_status", "")
+        ).lower() not in {"", "unknown", "unverified"}
 
-        if engagement == "hot":
-
+        if not engagement_verified:
+            st.write(
+                "Engagement has not been verified yet. "
+                "The application does not infer engagement risk from a discovery placeholder."
+            )
+        elif engagement == "hot":
             st.write(
                 "Low engagement risk. "
-                "The account shows a strong buying "
-                "or partnership signal."
+                "The account shows a strong buying or partnership signal."
             )
-
         elif engagement == "warm":
-
             st.write(
                 "Moderate engagement risk. "
                 "The account may require additional nurturing."
             )
-
         else:
-
             st.write(
-                "Higher engagement risk. "
-                "The account may require education "
-                "and longer-cycle development."
+                "Higher engagement risk based on the verified engagement signal."
             )
 
     st.divider()
