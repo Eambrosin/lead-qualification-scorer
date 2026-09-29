@@ -1049,6 +1049,7 @@ if uploaded is not None:
                 pd.DataFrame(
                     {
                         "Component": [
+                            "Upstream Account Fit",
                             "Region Fit",
                             "Industry Fit",
                             "Company Size Fit",
@@ -1056,6 +1057,10 @@ if uploaded is not None:
                             "Engagement",
                         ],
                         "Effective Weight": [
+                            effective_weights.get(
+                                "upstream_fit",
+                                0,
+                            ),
                             effective_weights[
                                 "region"
                             ],
