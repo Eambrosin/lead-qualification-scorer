@@ -97,6 +97,31 @@ def build_runtime_config(
     return config
 
 
+def clean_optional_text(value, default=""):
+    if value is None:
+        return default
+    try:
+        if pd.isna(value):
+            return default
+    except Exception:
+        pass
+    text = str(value).strip()
+    if text.lower() in {"", "nan", "none", "<na>", "null"}:
+        return default
+    return text
+
+
+def safe_optional_number(value, default=0.0):
+    if value is None:
+        return default
+    try:
+        if pd.isna(value):
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
 def prepare_lead_for_ai(
     row,
     runtime_config,
@@ -139,18 +164,18 @@ def prepare_lead_for_ai(
         "professional_setting": row.get("professional_setting", ""),
         "observed_technology_axes": row.get("observed_technology_axes", ""),
         "technology_validation_questions": row.get("technology_validation_questions", ""),
-        "account_website": row.get("account_website", ""),
-        "website_evidence_status": row.get("website_evidence_status", ""),
-        "public_phone": row.get("public_phone", ""),
-        "public_email": row.get("public_email", ""),
-        "public_address": row.get("public_address", ""),
-        "contact_channel_status": row.get("contact_channel_status", ""),
-        "account_data_completeness": row.get("account_data_completeness", ""),
-        "enrichment_status": row.get("enrichment_status", ""),
-        "decision_maker_name": row.get("decision_maker_name", ""),
-        "decision_maker_headline": row.get("decision_maker_headline", ""),
-        "decision_maker_linkedin": row.get("decision_maker_linkedin", ""),
-        "decision_maker_confidence": row.get("decision_maker_confidence", ""),
+        "account_website": clean_optional_text(row.get("account_website", "")),
+        "website_evidence_status": clean_optional_text(row.get("website_evidence_status", "")),
+        "public_phone": clean_optional_text(row.get("public_phone", "")),
+        "public_email": clean_optional_text(row.get("public_email", "")),
+        "public_address": clean_optional_text(row.get("public_address", "")),
+        "contact_channel_status": clean_optional_text(row.get("contact_channel_status", "")),
+        "account_data_completeness": safe_optional_number(row.get("account_data_completeness", 0)),
+        "enrichment_status": clean_optional_text(row.get("enrichment_status", "")),
+        "decision_maker_name": clean_optional_text(row.get("decision_maker_name", "")),
+        "decision_maker_headline": clean_optional_text(row.get("decision_maker_headline", "")),
+        "decision_maker_linkedin": clean_optional_text(row.get("decision_maker_linkedin", "")),
+        "decision_maker_confidence": clean_optional_text(row.get("decision_maker_confidence", "")),
     }
 
 
@@ -1791,53 +1816,75 @@ if uploaded is not None:
                 f"{selected_row.get('observed_technology_axes')}"
             )
 
-        if str(selected_row.get("enrichment_status", "")).strip():
+        enrichment_status = clean_optional_text(
+            selected_row.get("enrichment_status", "")
+        )
+        if enrichment_status:
             st.write(
                 f"**Account Enrichment:** "
-                f"{selected_row.get('enrichment_status')}"
+                f"{enrichment_status}"
             )
 
-        if pd.notna(selected_row.get("account_data_completeness", pd.NA)):
-            try:
-                st.write(
-                    f"**Account Data Completeness:** "
-                    f"{float(selected_row.get('account_data_completeness', 0)):.0f}%"
-                )
-            except Exception:
-                pass
+        account_data_completeness = selected_row.get(
+            "account_data_completeness",
+            pd.NA,
+        )
+        if pd.notna(account_data_completeness):
+            st.write(
+                f"**Account Data Completeness:** "
+                f"{safe_optional_number(account_data_completeness):.0f}%"
+            )
 
-        if str(selected_row.get("account_website", "")).strip():
+        account_website = clean_optional_text(
+            selected_row.get("account_website", "")
+        )
+        if account_website:
             st.write(
                 f"**Website:** "
-                f"{selected_row.get('account_website')}"
+                f"{account_website}"
             )
 
-        if str(selected_row.get("public_address", "")).strip():
+        public_address = clean_optional_text(
+            selected_row.get("public_address", "")
+        )
+        if public_address:
             st.write(
                 f"**Public Address:** "
-                f"{selected_row.get('public_address')}"
+                f"{public_address}"
             )
 
-        if str(selected_row.get("public_phone", "")).strip():
+        public_phone = clean_optional_text(
+            selected_row.get("public_phone", "")
+        )
+        if public_phone:
             st.write(
                 f"**Public Phone:** "
-                f"{selected_row.get('public_phone')}"
+                f"{public_phone}"
             )
 
-        if str(selected_row.get("public_email", "")).strip():
+        public_email = clean_optional_text(
+            selected_row.get("public_email", "")
+        )
+        if public_email:
             st.write(
                 f"**Public Email:** "
-                f"{selected_row.get('public_email')}"
+                f"{public_email}"
             )
 
-        if str(selected_row.get("decision_maker_name", "")).strip():
+        decision_maker_name = clean_optional_text(
+            selected_row.get("decision_maker_name", "")
+        )
+        if decision_maker_name:
             st.write(
                 f"**Decision-Maker Candidate:** "
-                f"{selected_row.get('decision_maker_name')}"
+                f"{decision_maker_name}"
             )
-            if str(selected_row.get("decision_maker_headline", "")).strip():
+            decision_maker_headline = clean_optional_text(
+                selected_row.get("decision_maker_headline", "")
+            )
+            if decision_maker_headline:
                 st.caption(
-                    str(selected_row.get("decision_maker_headline"))
+                    decision_maker_headline
                 )
 
     with workspace_col_2:
