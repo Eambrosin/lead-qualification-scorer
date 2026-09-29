@@ -772,6 +772,58 @@ if uploaded is not None:
                 errors="coerce",
             )
 
+        # Backward-compatible repair for older IDENTIFY handoffs.
+        # New exports already provide these fields explicitly.
+        if "market_profile_id" in source_df.columns:
+            medical_mask = (
+                source_df["market_profile_id"]
+                .fillna("")
+                .astype(str)
+                .str.strip()
+                .eq("medical_aesthetics")
+            )
+
+            if "industry" in source_df.columns:
+                missing_industry = source_df["industry"].fillna("").astype(str).str.strip().eq("")
+                source_df.loc[medical_mask & missing_industry, "industry"] = "Medical Aesthetics"
+
+            if "territory_profile_id" in source_df.columns:
+                north_italy_mask = (
+                    source_df["territory_profile_id"]
+                    .fillna("")
+                    .astype(str)
+                    .str.startswith("it_north_")
+                )
+
+                if "country" in source_df.columns:
+                    missing_country = source_df["country"].fillna("").astype(str).str.strip().eq("")
+                    source_df.loc[north_italy_mask & missing_country, "country"] = "Italy"
+
+                if "region" in source_df.columns:
+                    missing_region = source_df["region"].fillna("").astype(str).str.strip().eq("")
+                    source_df.loc[north_italy_mask & missing_region, "region"] = "EU"
+
+        # Hold obvious documents/content pages out of commercial qualification.
+        if "account_identity_status" in source_df.columns:
+            identity_ready = ~source_df["account_identity_status"].fillna("").astype(str).str.contains(
+                "Content / document",
+                case=False,
+                regex=False,
+            )
+            source_df = source_df[identity_ready].copy()
+        else:
+            content_name_mask = source_df["company_name"].fillna("").astype(str).str.lower().str.contains(
+                r"(^cv\b|programma congressuale|^programma congressuale|programmi viso|^criolipolisi$|offerte di lavoro)",
+                regex=True,
+            )
+            removed_content_rows = int(content_name_mask.sum())
+            if removed_content_rows:
+                st.warning(
+                    f"{removed_content_rows} obvious content/document results from an older "
+                    "Discovery export were excluded from commercial qualification."
+                )
+                source_df = source_df[~content_name_mask].copy()
+
         if "source_stage" in source_df.columns:
             upstream_stages = sorted(
                 source_df["source_stage"].dropna().astype(str).unique().tolist()
