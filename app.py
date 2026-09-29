@@ -887,9 +887,25 @@ if uploaded is not None:
         len(df),
     )
 
+    verified_deal_mask = pd.Series(True, index=df.index)
+    if "deal_value_status" in df.columns:
+        verified_deal_mask = ~df["deal_value_status"].fillna("").astype(str).str.lower().isin(
+            ["", "unknown", "unverified"]
+        )
+
+    verified_deal_values = pd.to_numeric(
+        df["estimated_deal_value_usd"],
+        errors="coerce",
+    ).fillna(0)
+    verified_pipeline_value = verified_deal_values[verified_deal_mask].sum()
+
     col2.metric(
-        "Pipeline Value",
-        f"${df['estimated_deal_value_usd'].sum():,.0f}",
+        "Qualified Pipeline Value",
+        (
+            "$" + f"{verified_pipeline_value:,.0f}"
+            if verified_pipeline_value > 0
+            else "Not qualified"
+        ),
     )
 
     col3.metric(
