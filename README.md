@@ -230,6 +230,27 @@ This avoids the simplistic assumption that a larger company is always a better c
 
 ---
 
+## Canonical ICP Presets
+
+The Streamlit application includes reusable qualification presets aligned with the Commercial Intelligence suite:
+
+- General B2B
+- Medical Aesthetics — Clinics & Practitioners
+- Renewable Energy
+- Agribusiness
+- Logistics & Trade
+- Fintech
+- Real Estate
+- Government / Public Sector
+
+Presets configure sensible starting assumptions while leaving every scoring control editable.
+
+The **Medical Aesthetics** profile uses a 0–250 employee preferred range so small clinics and practices are not automatically penalized by a generic enterprise-company-size assumption.
+
+When an upstream export contains `market_profile_id`, the app checks whether the active ICP preset is aligned and warns the user when the profiles differ.
+
+---
+
 # ⚖️ Configurable Scoring Model
 
 The default v2.0 model evaluates five commercial dimensions.
@@ -563,6 +584,15 @@ score
 tier
 recommended_action
 score_rationale
+territory_profile_id
+vendor_profile_id
+territory_region
+territory_province
+territory_city
+account_opportunity_score
+territory_status
+professional_setting
+observed_technology_axes
 ```
 
 The application preserves useful upstream metadata from Opportunity Discovery and exports a dedicated **ENGAGE handoff** for Adaptive Outreach. Region aliases such as `Europe` → `EU` are normalized so cross-app files remain compatible.
