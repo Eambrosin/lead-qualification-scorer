@@ -1913,6 +1913,7 @@ if uploaded is not None:
     )
 
     engage_handoff = df.copy()
+    engage_handoff["schema_version"] = "1.0"
     engage_handoff["source_stage"] = "PRIORITIZE"
 
     st.download_button(
