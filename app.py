@@ -1483,6 +1483,44 @@ if uploaded is not None:
                 f"{selected_row['company_size']:,.0f}"
             )
 
+        if (
+            "territory_region" in selected_row.index
+            and str(selected_row.get("territory_region", "")).strip()
+        ):
+            st.write(
+                f"**Territory:** "
+                f"{selected_row.get('territory_region', '')} · "
+                f"{selected_row.get('territory_province', '')} · "
+                f"{selected_row.get('territory_city', '')}"
+            )
+
+        if (
+            "account_opportunity_score" in selected_row.index
+            and pd.notna(selected_row.get("account_opportunity_score"))
+        ):
+            st.write(
+                f"**Upstream Account Opportunity:** "
+                f"{selected_row.get('account_opportunity_score')}"
+            )
+
+        if (
+            "territory_status" in selected_row.index
+            and str(selected_row.get("territory_status", "")).strip()
+        ):
+            st.write(
+                f"**Territory Status:** "
+                f"{selected_row.get('territory_status')}"
+            )
+
+        if (
+            "observed_technology_axes" in selected_row.index
+            and str(selected_row.get("observed_technology_axes", "")).strip()
+        ):
+            st.write(
+                f"**Observed Technology Axes:** "
+                f"{selected_row.get('observed_technology_axes')}"
+            )
+
     with workspace_col_2:
 
         st.markdown(
