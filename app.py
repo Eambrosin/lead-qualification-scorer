@@ -139,6 +139,18 @@ def prepare_lead_for_ai(
         "professional_setting": row.get("professional_setting", ""),
         "observed_technology_axes": row.get("observed_technology_axes", ""),
         "technology_validation_questions": row.get("technology_validation_questions", ""),
+        "account_website": row.get("account_website", ""),
+        "website_evidence_status": row.get("website_evidence_status", ""),
+        "public_phone": row.get("public_phone", ""),
+        "public_email": row.get("public_email", ""),
+        "public_address": row.get("public_address", ""),
+        "contact_channel_status": row.get("contact_channel_status", ""),
+        "account_data_completeness": row.get("account_data_completeness", ""),
+        "enrichment_status": row.get("enrichment_status", ""),
+        "decision_maker_name": row.get("decision_maker_name", ""),
+        "decision_maker_headline": row.get("decision_maker_headline", ""),
+        "decision_maker_linkedin": row.get("decision_maker_linkedin", ""),
+        "decision_maker_confidence": row.get("decision_maker_confidence", ""),
     }
 
 
@@ -1778,6 +1790,55 @@ if uploaded is not None:
                 f"**Observed Technology Axes:** "
                 f"{selected_row.get('observed_technology_axes')}"
             )
+
+        if str(selected_row.get("enrichment_status", "")).strip():
+            st.write(
+                f"**Account Enrichment:** "
+                f"{selected_row.get('enrichment_status')}"
+            )
+
+        if pd.notna(selected_row.get("account_data_completeness", pd.NA)):
+            try:
+                st.write(
+                    f"**Account Data Completeness:** "
+                    f"{float(selected_row.get('account_data_completeness', 0)):.0f}%"
+                )
+            except Exception:
+                pass
+
+        if str(selected_row.get("account_website", "")).strip():
+            st.write(
+                f"**Website:** "
+                f"{selected_row.get('account_website')}"
+            )
+
+        if str(selected_row.get("public_address", "")).strip():
+            st.write(
+                f"**Public Address:** "
+                f"{selected_row.get('public_address')}"
+            )
+
+        if str(selected_row.get("public_phone", "")).strip():
+            st.write(
+                f"**Public Phone:** "
+                f"{selected_row.get('public_phone')}"
+            )
+
+        if str(selected_row.get("public_email", "")).strip():
+            st.write(
+                f"**Public Email:** "
+                f"{selected_row.get('public_email')}"
+            )
+
+        if str(selected_row.get("decision_maker_name", "")).strip():
+            st.write(
+                f"**Decision-Maker Candidate:** "
+                f"{selected_row.get('decision_maker_name')}"
+            )
+            if str(selected_row.get("decision_maker_headline", "")).strip():
+                st.caption(
+                    str(selected_row.get("decision_maker_headline"))
+                )
 
     with workspace_col_2:
 
