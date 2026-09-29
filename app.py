@@ -1545,9 +1545,17 @@ if uploaded is not None:
         ],
     )
 
+    selected_deal_verified = str(
+        selected_row.get("deal_value_status", "")
+    ).lower() not in {"", "unknown", "unverified"}
+
     col_profile_4.metric(
         "Deal Value",
-        f"${selected_row['estimated_deal_value_usd']:,.0f}",
+        (
+            "$" + f"{selected_row['estimated_deal_value_usd']:,.0f}"
+            if selected_deal_verified
+            else "Not qualified"
+        ),
     )
 
     # ------------------------------------------------------------------
