@@ -2,6 +2,7 @@ import unittest
 
 import pandas as pd
 
+from qualification_profiles import get_qualification_profile
 from lead_qualifier import (
     INDUSTRY_SCORES,
     WEIGHTS,
@@ -86,6 +87,41 @@ class LeadQualificationEngineTests(unittest.TestCase):
         self.assertEqual(ranked.iloc[0]["market_profile_id"], "medical_aesthetics")
         self.assertEqual(ranked.iloc[0]["source_stage"], "IDENTIFY")
         self.assertGreater(ranked.iloc[0]["score"], 0)
+
+
+    def test_medical_aesthetics_icp_does_not_penalize_small_clinics_by_default(self):
+        profile = get_qualification_profile(
+            "Medical Aesthetics — Clinics & Practitioners"
+        )
+        self.assertEqual(profile["profile_id"], "medical_aesthetics")
+        self.assertEqual(profile["min_company_size"], 0)
+        self.assertEqual(profile["max_company_size"], 250)
+        self.assertIn("Medical Aesthetics", profile["preferred_industries"])
+
+    def test_territory_metadata_survives_ranking(self):
+        medical = {
+            "company_name": "Example Aesthetic Clinic",
+            "country": "Italy",
+            "region": "EU",
+            "industry": "Medical Aesthetics",
+            "company_size": 18,
+            "estimated_deal_value_usd": 75000,
+            "engagement_signal": "warm",
+            "market_profile_id": "medical_aesthetics",
+            "territory_profile_id": "it_north_medical_aesthetics",
+            "territory_region": "Lombardia",
+            "territory_province": "Bergamo",
+            "territory_city": "Bergamo",
+            "account_opportunity_score": 88.0,
+            "territory_status": "Find Decision Maker",
+        }
+        ranked = rank_leads(pd.DataFrame([medical]))
+        self.assertEqual(
+            ranked.iloc[0]["territory_profile_id"],
+            "it_north_medical_aesthetics",
+        )
+        self.assertEqual(ranked.iloc[0]["territory_province"], "Bergamo")
+        self.assertEqual(ranked.iloc[0]["account_opportunity_score"], 88.0)
 
 
 if __name__ == "__main__":
