@@ -212,6 +212,7 @@ Government / Public Sector
 Fintech
 Real Estate
 Logistics & Trade
+Medical Aesthetics
 ```
 
 This allows the scoring model to reflect actual commercial focus rather than assuming every sector has equal relevance.
@@ -556,6 +557,9 @@ This preserves qualification context between analysis and execution.
 Typical exported fields include:
 
 ```text
+schema_version
+source_stage
+market_profile_id
 company_name
 country
 region
@@ -568,6 +572,8 @@ tier
 recommended_action
 score_rationale
 ```
+
+The application preserves useful upstream metadata from Opportunity Discovery and exports a dedicated **ENGAGE handoff** for Adaptive Outreach. Region aliases such as `Europe` → `EU` are normalized so cross-app files remain compatible.
 
 The Outreach platform automatically detects this information and activates:
 
