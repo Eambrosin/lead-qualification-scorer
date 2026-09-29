@@ -653,31 +653,7 @@ def _commercial_priority(tier):
     return "Low"
 
 
-def _qualification_gap(lead):
-    engagement = str(
-        lead["engagement_signal"]
-    ).lower()
-
-    if engagement == "cold":
-        return (
-            "Engagement is currently weak and should be validated "
-            "before significant commercial resources are committed."
-        )
-
-    if engagement == "warm":
-        return (
-            "The opportunity shows some engagement, but timing, "
-            "decision authority and active commercial need still "
-            "require validation."
-        )
-
-    return (
-        "The opportunity shows a strong engagement signal, but "
-        "decision authority, business need and buying timeline "
-        "still require validation."
-    )
-
-
+def _qualification_gap(lead):\n    engagement_status = str(lead.get("engagement_status", "")).lower()\n\n    if engagement_status in {"", "unknown", "unverified"}:\n        return (\n            "Engagement has not yet been verified. Validate stakeholder relevance, "\n            "current need and timing before inferring engagement risk."\n        )\n\n    engagement = str(lead["engagement_signal"]).lower()\n\n    if engagement == "cold":\n        return (\n            "Verified engagement is currently weak and should be developed "\n            "before significant commercial resources are committed."\n        )\n\n    if engagement == "warm":\n        return (\n            "The opportunity shows some verified engagement, but timing and "\n            "active commercial need still require validation."\n        )\n\n    return (\n        "The opportunity shows a strong verified engagement signal, but business need "\n        "and buying timeline still require validation."\n    )\n
 def _local_ai_insight(lead):
     company = lead["company"]
     industry = lead["industry"]
