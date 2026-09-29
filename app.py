@@ -1725,72 +1725,7 @@ if uploaded is not None:
             ]
         )
 
-        breakdown_df = (
-            pd.DataFrame(
-                {
-                    "Component": [
-                        "Region Fit",
-                        "Industry Fit",
-                        "Company Size Fit",
-                        "Deal Value",
-                        "Engagement",
-                    ],
-                    "Raw Score": [
-                        raw_score_map[
-                            "region"
-                        ],
-                        raw_score_map[
-                            "industry"
-                        ],
-                        raw_score_map[
-                            "company_size"
-                        ],
-                        raw_score_map[
-                            "deal_value"
-                        ],
-                        raw_score_map[
-                            "engagement"
-                        ],
-                    ],
-                    "Weight": [
-                        effective_weights[
-                            "region"
-                        ],
-                        effective_weights[
-                            "industry"
-                        ],
-                        effective_weights[
-                            "company_size"
-                        ],
-                        effective_weights[
-                            "deal_value"
-                        ],
-                        effective_weights[
-                            "engagement"
-                        ],
-                    ],
-                    "Weighted Contribution": [
-                        contribution_map[
-                            "region"
-                        ],
-                        contribution_map[
-                            "industry"
-                        ],
-                        contribution_map[
-                            "company_size"
-                        ],
-                        contribution_map[
-                            "deal_value"
-                        ],
-                        contribution_map[
-                            "engagement"
-                        ],
-                    ],
-                }
-            )
-        )
-
-        breakdown_display = (
+        component_labels = {\n            "upstream_fit": "Upstream Account Fit",\n            "region": "Region Fit",\n            "industry": "Industry Fit",\n            "company_size": "Company Size Fit",\n            "deal_value": "Deal Value",\n            "engagement": "Engagement",\n        }\n\n        effective_row_weights = score_breakdown.get("effective_weights", {})\n\n        breakdown_df = pd.DataFrame([\n            {\n                "Component": label,\n                "Raw Score": (raw_score_map.get(key) if raw_score_map.get(key) is not None else "Not qualified"),\n                "Weight": effective_row_weights.get(key, 0),\n                "Weighted Contribution": contribution_map.get(key, 0),\n            }\n            for key, label in component_labels.items()\n        ])\n\n        breakdown_display = (
             breakdown_df.copy()
         )
 
