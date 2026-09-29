@@ -1271,24 +1271,33 @@ if uploaded is not None:
         "#### Executive Interpretation"
     )
 
-    st.write(
-        f"Focus initial commercial effort on "
-        f"**{fastest_path_account['company_name']}** because it combines "
-        f"a strong score, Tier {fastest_path_account['tier']} classification "
-        f"and a {fastest_path_account['engagement_signal']} engagement signal."
-    )
+    if fastest_path_account is not None:
+        st.write(
+            f"**{fastest_path_account['company_name']}** currently has the clearest "
+            f"commercial path because engagement is verified and its fit score is "
+            f"{fastest_path_account['score']}."
+        )
+    else:
+        st.write(
+            "No account currently has a verified fast path to revenue. "
+            "Prioritize contact and engagement verification before making a timing conclusion."
+        )
+
+    if top_revenue is not None:
+        st.write(
+            f"**{top_revenue['company_name']}** has the largest verified estimated deal "
+            f"value at **$" + f"{top_revenue['estimated_deal_value_usd']:,.0f}**."
+        )
+    else:
+        st.write(
+            "Deal values are not yet qualified, so placeholder zero values are not used "
+            "to identify a Top Revenue Opportunity."
+        )
 
     st.write(
-        f"From a revenue perspective, "
-        f"**{top_revenue['company_name']}** represents the largest "
-        f"estimated deal value at "
-        f"**${top_revenue['estimated_deal_value_usd']:,.0f}**."
-    )
-
-    st.write(
-        f"For market expansion, "
-        f"**{top_expansion_account['company_name']}** is the strongest "
-        f"current account within the configured expansion priorities."
+        f"For market-fit prioritization, **{top_expansion_account['company_name']}** "
+        f"currently ranks highest among the configured expansion priorities, subject to "
+        f"its qualification completeness."
     )
 
     st.divider()
