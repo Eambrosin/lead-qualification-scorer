@@ -1387,7 +1387,10 @@ if uploaded is not None:
     priority_columns.extend(
         [
             "estimated_deal_value_usd",
+            "account_opportunity_score",
             "score",
+            "qualification_completeness",
+            "qualification_status",
             "tier",
             "commercial_priority",
             "why_this_account_matters",
@@ -1442,7 +1445,11 @@ if uploaded is not None:
         [
             "estimated_deal_value_usd",
             "engagement_signal",
+            "engagement_status",
+            "account_opportunity_score",
             "score",
+            "qualification_completeness",
+            "qualification_status",
             "tier",
             "recommended_action",
         ]
