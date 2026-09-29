@@ -1663,8 +1663,22 @@ if uploaded is not None:
         )
 
         st.write(
-            f"**Estimated Deal Value:** "
-            f"${selected_row['estimated_deal_value_usd']:,.0f}"
+            "**Estimated Deal Value:** "
+            + (
+                "$" + f"{selected_row['estimated_deal_value_usd']:,.0f}"
+                if selected_deal_verified
+                else "Not yet qualified"
+            )
+        )
+
+        st.write(
+            f"**Qualification Completeness:** "
+            f"{selected_row.get('qualification_completeness', 0):.0f}%"
+        )
+
+        st.write(
+            f"**Qualification Status:** "
+            f"{selected_row.get('qualification_status', '')}"
         )
 
         st.write(
@@ -1677,9 +1691,17 @@ if uploaded is not None:
             f"{selected_row['tier']}"
         )
 
+        engagement_verified = str(
+            selected_row.get("engagement_status", "")
+        ).lower() not in {"", "unknown", "unverified"}
+
         st.write(
-            f"**Engagement:** "
-            f"{selected_row['engagement_signal']}"
+            "**Engagement:** "
+            + (
+                str(selected_row.get("engagement_signal", "")).title()
+                if engagement_verified
+                else "Not yet verified"
+            )
         )
 
     with workspace_col_3:
