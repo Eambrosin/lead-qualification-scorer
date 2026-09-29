@@ -122,10 +122,30 @@ def _lead_context(lead):
             "deal_value",
             "Unknown Deal Value",
         ),
+        "deal_value_status": _get_text(
+            lead,
+            "deal_value_status",
+            "verified",
+        ),
         "engagement_signal": _get_text(
             lead,
             "engagement_signal",
             "Unknown Engagement",
+        ),
+        "engagement_status": _get_text(
+            lead,
+            "engagement_status",
+            "verified",
+        ),
+        "qualification_completeness": _get_value(
+            lead,
+            "qualification_completeness",
+            "",
+        ),
+        "qualification_status": _get_text(
+            lead,
+            "qualification_status",
+            "",
         ),
         "score": _get_value(
             lead,
@@ -349,12 +369,20 @@ def _commercial_context_block(lead_data):
             "country": lead_data["country"],
             "region": lead_data["region"],
             "industry": lead_data["industry"],
-            "estimated_deal_value": _format_money(
-                lead_data["deal_value"]
+            "estimated_deal_value": (
+                _format_money(lead_data["deal_value"])
+                if str(lead_data["deal_value_status"]).lower()
+                not in {"", "unknown", "unverified"}
+                else "Not yet qualified"
             ),
-            "engagement_signal": lead_data[
-                "engagement_signal"
-            ],
+            "deal_value_status": lead_data["deal_value_status"],
+            "engagement_signal": (
+                lead_data["engagement_signal"]
+                if str(lead_data["engagement_status"]).lower()
+                not in {"", "unknown", "unverified"}
+                else "Not yet verified"
+            ),
+            "engagement_status": lead_data["engagement_status"],
         },
         "deterministic_commercial_intelligence": {
             "score": lead_data["score"],
@@ -367,6 +395,12 @@ def _commercial_context_block(lead_data):
             ],
             "score_breakdown": lead_data[
                 "score_breakdown"
+            ],
+            "qualification_completeness": lead_data[
+                "qualification_completeness"
+            ],
+            "qualification_status": lead_data[
+                "qualification_status"
             ],
         },
         "active_icp": {
