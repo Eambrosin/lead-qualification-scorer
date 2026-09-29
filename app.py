@@ -1749,7 +1749,28 @@ if uploaded is not None:
             ]
         )
 
-        component_labels = {\n            "upstream_fit": "Upstream Account Fit",\n            "region": "Region Fit",\n            "industry": "Industry Fit",\n            "company_size": "Company Size Fit",\n            "deal_value": "Deal Value",\n            "engagement": "Engagement",\n        }\n\n        effective_row_weights = score_breakdown.get("effective_weights", {})\n\n        breakdown_df = pd.DataFrame([\n            {\n                "Component": label,\n                "Raw Score": (raw_score_map.get(key) if raw_score_map.get(key) is not None else "Not qualified"),\n                "Weight": effective_row_weights.get(key, 0),\n                "Weighted Contribution": contribution_map.get(key, 0),\n            }\n            for key, label in component_labels.items()\n        ])\n\n        breakdown_display = (
+        component_labels = {
+            "upstream_fit": "Upstream Account Fit",
+            "region": "Region Fit",
+            "industry": "Industry Fit",
+            "company_size": "Company Size Fit",
+            "deal_value": "Deal Value",
+            "engagement": "Engagement",
+        }
+
+        effective_row_weights = score_breakdown.get("effective_weights", {})
+
+        breakdown_df = pd.DataFrame([
+            {
+                "Component": label,
+                "Raw Score": (raw_score_map.get(key) if raw_score_map.get(key) is not None else "Not qualified"),
+                "Weight": effective_row_weights.get(key, 0),
+                "Weighted Contribution": contribution_map.get(key, 0),
+            }
+            for key, label in component_labels.items()
+        ])
+
+        breakdown_display = (
             breakdown_df.copy()
         )
 
