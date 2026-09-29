@@ -21,32 +21,24 @@ Commercial scores, tiers and prioritization are calculated using configurable bu
 
 # Role in the Commercial Intelligence Ecosystem
 
-This application represents the **PRIORITIZE** stage of the broader AI Business Development Toolkit.
+This application represents the **PRIORITIZE** stage of the account-development track in the broader AI Business Development Toolkit.
 
 ```text
+ACCOUNT DEVELOPMENT
 IDENTIFY
-Opportunity Discovery
-
-        ↓
-
-PRIORITIZE
-Lead Qualification & Revenue Prioritization
-← YOU ARE HERE
-
-        ↓
-
+   ↓
+PRIORITIZE ← YOU ARE HERE
+   ↓
 ENGAGE
-Adaptive Outreach Intelligence
 
-        ↓
-
+PARTNERSHIP DEVELOPMENT
+IDENTIFY / Partner Universe
+   ↓
 PARTNER
-Partnership Opportunity Intelligence
+   ↓
+ENGAGE
 
-        ↓
-
-EXPAND
-Global Market Entry Intelligence
+Both tracks can feed EXPAND / Territory Intelligence.
 ```
 
 The objective is to convert raw commercial pipeline data into a structured decision layer before commercial resources are allocated.
