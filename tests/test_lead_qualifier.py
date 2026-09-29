@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 
 from lead_qualifier import (
+    INDUSTRY_SCORES,
     WEIGHTS,
     rank_leads,
     score_company_size,
@@ -65,6 +66,26 @@ class LeadQualificationEngineTests(unittest.TestCase):
         invalid = pd.DataFrame([invalid_lead])
         with self.assertRaises(ValueError):
             validate_input_dataframe(invalid)
+
+    def test_medical_aesthetics_is_supported_industry(self):
+        self.assertIn("Medical Aesthetics", INDUSTRY_SCORES)
+
+    def test_europe_region_alias_integrates_discovery_output(self):
+        medical = {
+            "company_name": "Example Aesthetic Clinic",
+            "country": "Italy",
+            "region": "Europe",
+            "industry": "Medical Aesthetics",
+            "company_size": 25,
+            "estimated_deal_value_usd": 75000,
+            "engagement_signal": "warm",
+            "market_profile_id": "medical_aesthetics",
+            "source_stage": "IDENTIFY",
+        }
+        ranked = rank_leads(pd.DataFrame([medical]))
+        self.assertEqual(ranked.iloc[0]["market_profile_id"], "medical_aesthetics")
+        self.assertEqual(ranked.iloc[0]["source_stage"], "IDENTIFY")
+        self.assertGreater(ranked.iloc[0]["score"], 0)
 
 
 if __name__ == "__main__":
