@@ -367,12 +367,17 @@ def priority_reason(
             "warm engagement signal"
         )
 
+    deal_verified = str(
+        row.get("deal_value_status", "verified")
+    ).lower() not in {"", "unknown", "unverified"}
+
     if (
-        row["estimated_deal_value_usd"]
-        >= high_value_threshold
+        deal_verified
+        and high_value_threshold > 0
+        and row["estimated_deal_value_usd"] >= high_value_threshold
     ):
         reasons.append(
-            "high estimated deal value"
+            "high verified estimated deal value"
         )
 
     return (
@@ -1347,24 +1352,32 @@ if uploaded is not None:
         df.head(10).copy()
     )
 
+    verified_priority_values = pd.to_numeric(
+        df.loc[verified_deal_mask, "estimated_deal_value_usd"],
+        errors="coerce",
+    ).dropna()
+    verified_priority_values = verified_priority_values[
+        verified_priority_values > 0
+    ]
     high_value_threshold = (
-        df[
-            "estimated_deal_value_usd"
-        ].quantile(
-            0.75
-        )
+        verified_priority_values.quantile(0.75)
+        if not verified_priority_values.empty
+        else 0
     )
 
     priority_df[
         "commercial_priority"
-    ] = priority_df[
-        "tier"
-    ].map(
-        {
-            "A": "High",
-            "B": "Medium",
-            "C": "Low",
-        }
+    ] = priority_df.apply(
+        lambda row: (
+            "Research"
+            if row.get("qualification_completeness", 0) < 55
+            else {
+                "A": "High",
+                "B": "Medium",
+                "C": "Low",
+            }.get(row["tier"], "Low")
+        ),
+        axis=1,
     )
 
     priority_df[
