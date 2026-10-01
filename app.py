@@ -1150,15 +1150,24 @@ if uploaded is not None:
         )
 
     verified_deal_values = pd.to_numeric(
-        df["estimated_deal_value_usd"],
+        df["deal_value_for_scoring"],
         errors="coerce",
     ).fillna(0)
     verified_pipeline_value = verified_deal_values[verified_deal_mask].sum()
+    pipeline_currencies = [
+        value
+        for value in df.loc[
+            verified_deal_mask & (verified_deal_values > 0),
+            "deal_value_currency_for_scoring",
+        ].dropna().astype(str).unique().tolist()
+        if value.strip()
+    ]
+    pipeline_currency = pipeline_currencies[0] if len(pipeline_currencies) == 1 else ""
 
     col2.metric(
         "Qualified Pipeline Value",
         (
-            "$" + f"{verified_pipeline_value:,.0f}"
+            format_deal_value(verified_pipeline_value, pipeline_currency)
             if verified_pipeline_value > 0
             else "Not qualified"
         ),
@@ -1289,6 +1298,62 @@ if uploaded is not None:
                 use_container_width=True,
             )
 
+    if "field_visit_completed" in df.columns:
+        field_mask = (
+            df["field_visit_completed"]
+            .fillna(False)
+            .astype(str)
+            .str.lower()
+            .isin(["true", "1", "yes", "y"])
+        )
+        field_rows = df[field_mask].copy()
+        if not field_rows.empty:
+            st.markdown("### 🚗 Field Feedback Requalification")
+            ff1, ff2, ff3, ff4 = st.columns(4)
+            ff1.metric("Visits Logged", len(field_rows))
+            ff2.metric(
+                "Field Qualified",
+                int((field_rows["qualification_status"] == "Field Qualified").sum()),
+            )
+            field_outcomes = field_rows.get(
+                "field_outcome",
+                pd.Series([""] * len(field_rows), index=field_rows.index),
+            ).fillna("").astype(str)
+            ff3.metric(
+                "Demo / Proposal Requests",
+                int(field_outcomes.isin(["Demo requested", "Proposal requested"]).sum()),
+            )
+            ff4.metric(
+                "Not Fit",
+                int((field_outcomes == "Not a fit").sum()),
+            )
+
+            field_columns = [
+                "company_name",
+                "field_visit_date",
+                "field_outcome",
+                "field_product_interest",
+                "field_current_technologies",
+                "field_patient_demand",
+                "field_investment_timing",
+                "deal_value_for_scoring",
+                "deal_value_currency_for_scoring",
+                "score",
+                "qualification_status",
+                "recommended_action",
+            ]
+            st.dataframe(
+                field_rows[
+                    [column for column in field_columns if column in field_rows.columns]
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+            st.caption(
+                "Field feedback is salesperson-entered evidence. It strengthens qualification "
+                "but does not create a win probability or replace commercial verification."
+            )
+
     with st.expander(
         "⚙️ Active ICP & Scoring Model"
     ):
@@ -1412,7 +1477,7 @@ if uploaded is not None:
         verified_deal_mask
         & (
             pd.to_numeric(
-                df["estimated_deal_value_usd"],
+                df["deal_value_for_scoring"],
                 errors="coerce",
             ).fillna(0)
             > 0
@@ -1421,7 +1486,7 @@ if uploaded is not None:
 
     top_revenue = (
         verified_deal_accounts.sort_values(
-            "estimated_deal_value_usd",
+            "deal_value_for_scoring",
             ascending=False,
         ).iloc[0]
         if not verified_deal_accounts.empty
@@ -1511,7 +1576,10 @@ if uploaded is not None:
                 else "Not qualified"
             ),
             (
-                "$" + f"{top_revenue['estimated_deal_value_usd']:,.0f}"
+                format_deal_value(
+                    top_revenue["deal_value_for_scoring"],
+                    top_revenue.get("deal_value_currency_for_scoring", ""),
+                )
                 if top_revenue is not None
                 else "Deal values unknown"
             ),
@@ -1566,14 +1634,23 @@ if uploaded is not None:
             & verified_deal_mask
         ]
         tier_a_pipeline = pd.to_numeric(
-            tier_a_verified["estimated_deal_value_usd"],
+            tier_a_verified["deal_value_for_scoring"],
             errors="coerce",
         ).fillna(0).sum()
+        tier_a_currencies = [
+            value
+            for value in tier_a_verified.get(
+                "deal_value_currency_for_scoring",
+                pd.Series(dtype=str),
+            ).dropna().astype(str).unique().tolist()
+            if value.strip()
+        ]
+        tier_a_currency = tier_a_currencies[0] if len(tier_a_currencies) == 1 else ""
 
         st.metric(
             "Tier A Qualified Pipeline",
             (
-                "$" + f"{tier_a_pipeline:,.0f}"
+                format_deal_value(tier_a_pipeline, tier_a_currency)
                 if tier_a_pipeline > 0
                 else "Not qualified"
             ),
@@ -1599,7 +1676,7 @@ if uploaded is not None:
     if top_revenue is not None:
         st.write(
             f"**{top_revenue['company_name']}** has the largest verified estimated deal "
-            f"value at **$" + f"{top_revenue['estimated_deal_value_usd']:,.0f}**."
+            f"value at **{format_deal_value(top_revenue['deal_value_for_scoring'], top_revenue.get('deal_value_currency_for_scoring', ''))}**."
         )
     else:
         st.write(
@@ -1633,7 +1710,7 @@ if uploaded is not None:
     )
 
     verified_priority_values = pd.to_numeric(
-        df.loc[verified_deal_mask, "estimated_deal_value_usd"],
+        df.loc[verified_deal_mask, "deal_value_for_scoring"],
         errors="coerce",
     ).dropna()
     verified_priority_values = verified_priority_values[
@@ -1696,7 +1773,8 @@ if uploaded is not None:
 
     priority_columns.extend(
         [
-            "estimated_deal_value_usd",
+            "deal_value_for_scoring",
+            "deal_value_currency_for_scoring",
             "score",
             "qualification_completeness",
             "qualification_status",
@@ -1765,7 +1843,8 @@ if uploaded is not None:
 
     top_columns.extend(
         [
-            "estimated_deal_value_usd",
+            "deal_value_for_scoring",
+            "deal_value_currency_for_scoring",
             "engagement_signal",
         ]
     )
@@ -1862,10 +1941,12 @@ if uploaded is not None:
         selected_row.get("deal_value_status", "")
     ).lower() not in {"", "unknown", "unverified"}
 
+    selected_deal_value, selected_deal_currency = get_deal_value(selected_row)
+
     col_profile_4.metric(
         "Deal Value",
         (
-            "$" + f"{selected_row['estimated_deal_value_usd']:,.0f}"
+            format_deal_value(selected_deal_value, selected_deal_currency)
             if selected_deal_verified
             else "Not qualified"
         ),
@@ -2073,7 +2154,7 @@ if uploaded is not None:
         st.write(
             "**Estimated Deal Value:** "
             + (
-                "$" + f"{selected_row['estimated_deal_value_usd']:,.0f}"
+                format_deal_value(selected_deal_value, selected_deal_currency)
                 if selected_deal_verified
                 else "Not yet qualified"
             )
@@ -2474,12 +2555,12 @@ if uploaded is not None:
         )
 
         verified_revenue_df = df[verified_deal_mask].copy()
-        verified_revenue_df["estimated_deal_value_usd"] = pd.to_numeric(
-            verified_revenue_df["estimated_deal_value_usd"],
+        verified_revenue_df["deal_value_for_scoring"] = pd.to_numeric(
+            verified_revenue_df["deal_value_for_scoring"],
             errors="coerce",
         ).fillna(0)
         verified_revenue_df = verified_revenue_df[
-            verified_revenue_df["estimated_deal_value_usd"] > 0
+            verified_revenue_df["deal_value_for_scoring"] > 0
         ]
 
         if verified_revenue_df.empty:
@@ -2488,7 +2569,7 @@ if uploaded is not None:
             )
         else:
             revenue_by_tier = (
-                verified_revenue_df.groupby("tier")["estimated_deal_value_usd"]
+                verified_revenue_df.groupby("tier")["deal_value_for_scoring"]
                 .sum()
                 .reset_index()
             )
@@ -2496,8 +2577,11 @@ if uploaded is not None:
             fig_revenue = px.bar(
                 revenue_by_tier,
                 x="tier",
-                y="estimated_deal_value_usd",
-                title="Qualified Revenue Potential by Tier",
+                y="deal_value_for_scoring",
+                title=(
+                    "Qualified Revenue Potential by Tier"
+                    + (f" ({pipeline_currency})" if pipeline_currency else "")
+                ),
             )
 
             st.plotly_chart(
