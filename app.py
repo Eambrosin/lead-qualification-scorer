@@ -122,6 +122,57 @@ def safe_optional_number(value, default=0.0):
         return default
 
 
+DEAL_VALUE_FIELDS = [
+    ("estimated_deal_value_eur", "EUR"),
+    ("deal_value_eur", "EUR"),
+    ("estimated_deal_value_usd", "USD"),
+    ("deal_value_usd", "USD"),
+]
+
+
+def get_deal_value(row):
+    if "deal_value_for_scoring" in row.index:
+        value = safe_optional_number(row.get("deal_value_for_scoring", 0))
+        currency = clean_optional_text(
+            row.get("deal_value_currency_for_scoring", "")
+        ).upper()
+        if value > 0:
+            return value, currency
+
+    explicit_currency = clean_optional_text(
+        row.get("deal_value_currency", "")
+    ).upper()
+    for field, default_currency in DEAL_VALUE_FIELDS:
+        if field not in row.index:
+            continue
+        value = safe_optional_number(row.get(field, 0))
+        if value > 0:
+            return value, explicit_currency or default_currency
+    return 0.0, explicit_currency
+
+
+def currency_symbol(currency):
+    currency = clean_optional_text(currency).upper()
+    return {"EUR": "€", "USD": "$"}.get(
+        currency,
+        f"{currency} " if currency else "",
+    )
+
+
+def format_deal_value(value, currency):
+    value = safe_optional_number(value, 0)
+    if value <= 0:
+        return "Not qualified"
+    return f"{currency_symbol(currency)}{value:,.0f}"
+
+
+def active_deal_field(dataframe):
+    for field, currency in DEAL_VALUE_FIELDS:
+        if field in dataframe.columns:
+            return field, currency
+    return None, ""
+
+
 def prepare_lead_for_ai(
     row,
     runtime_config,
@@ -131,6 +182,7 @@ def prepare_lead_for_ai(
     """Prepare deterministic commercial context for the AI layer."""
 
     company_size = row.get("company_size", "")
+    deal_value, deal_currency = get_deal_value(row)
 
     return {
         "company": row["company_name"],
@@ -138,7 +190,8 @@ def prepare_lead_for_ai(
         "region": row["region"],
         "industry": row["industry"],
         "company_size": company_size,
-        "deal_value": row["estimated_deal_value_usd"],
+        "deal_value": deal_value,
+        "deal_value_currency": deal_currency,
         "deal_value_status": row.get("deal_value_status", "verified"),
         "engagement_signal": row["engagement_signal"],
         "engagement_status": row.get("engagement_status", "verified"),
@@ -176,6 +229,16 @@ def prepare_lead_for_ai(
         "decision_maker_headline": clean_optional_text(row.get("decision_maker_headline", "")),
         "decision_maker_linkedin": clean_optional_text(row.get("decision_maker_linkedin", "")),
         "decision_maker_confidence": clean_optional_text(row.get("decision_maker_confidence", "")),
+        "field_visit_completed": row.get("field_visit_completed", False),
+        "field_visit_date": clean_optional_text(row.get("field_visit_date", "")),
+        "field_outcome": clean_optional_text(row.get("field_outcome", "")),
+        "field_needs_summary": clean_optional_text(row.get("field_needs_summary", "")),
+        "field_patient_demand": clean_optional_text(row.get("field_patient_demand", "")),
+        "field_current_technologies": clean_optional_text(row.get("field_current_technologies", "")),
+        "field_decision_process": clean_optional_text(row.get("field_decision_process", "")),
+        "field_investment_timing": clean_optional_text(row.get("field_investment_timing", "")),
+        "field_product_interest": clean_optional_text(row.get("field_product_interest", "")),
+        "field_next_action": clean_optional_text(row.get("field_next_action", "")),
     }
 
 
@@ -408,10 +471,11 @@ def priority_reason(
         row.get("deal_value_status", "verified")
     ).lower() not in {"", "unknown", "unverified"}
 
+    deal_value, _ = get_deal_value(row)
     if (
         deal_verified
         and high_value_threshold > 0
-        and row["estimated_deal_value_usd"] >= high_value_threshold
+        and deal_value >= high_value_threshold
     ):
         reasons.append(
             "high verified estimated deal value"
@@ -799,8 +863,8 @@ uploaded = st.file_uploader(
     "Upload Pipeline CSV",
     type=["csv"],
     help=(
-        "Required fields: company_name, country, region, industry, "
-        "estimated_deal_value_usd, engagement_signal. "
+        "Required fields: company_name, country, region, industry and engagement_signal, "
+        "plus a deal-value field such as estimated_deal_value_eur or estimated_deal_value_usd. "
         "Recommended for Company Size Fit: company_size."
     ),
 )
@@ -814,14 +878,12 @@ if uploaded is not None:
             uploaded
         )
 
-        source_df[
-            "estimated_deal_value_usd"
-        ] = pd.to_numeric(
-            source_df[
-                "estimated_deal_value_usd"
-            ],
-            errors="coerce",
-        )
+        for deal_field, _ in DEAL_VALUE_FIELDS:
+            if deal_field in source_df.columns:
+                source_df[deal_field] = pd.to_numeric(
+                    source_df[deal_field],
+                    errors="coerce",
+                )
 
         if (
             "company_size"
@@ -941,13 +1003,35 @@ if uploaded is not None:
                     lambda value: "observed" if pd.notna(value) else "unknown"
                 )
 
+            deal_editor_field, deal_editor_currency = active_deal_field(source_df)
+            if not deal_editor_field:
+                if (
+                    "territory_profile_id" in source_df.columns
+                    and source_df["territory_profile_id"]
+                    .fillna("")
+                    .astype(str)
+                    .str.startswith("it_north_")
+                    .any()
+                ):
+                    deal_editor_field, deal_editor_currency = (
+                        "estimated_deal_value_eur",
+                        "EUR",
+                    )
+                else:
+                    deal_editor_field, deal_editor_currency = (
+                        "estimated_deal_value_usd",
+                        "USD",
+                    )
+                source_df[deal_editor_field] = 0.0
+                source_df["deal_value_currency"] = deal_editor_currency
+
             editor_columns = [
                 "company_name",
                 "territory_region",
                 "territory_province",
                 "territory_city",
                 "company_size",
-                "estimated_deal_value_usd",
+                deal_editor_field,
                 "engagement_signal",
             ]
             editor_columns = [
@@ -979,8 +1063,8 @@ if uploaded is not None:
                             "Engagement",
                             options=["", "cold", "warm", "hot"],
                         ),
-                        "estimated_deal_value_usd": st.column_config.NumberColumn(
-                            "Estimated Deal Value (USD)",
+                        deal_editor_field: st.column_config.NumberColumn(
+                            f"Estimated Deal Value ({deal_editor_currency})",
                             min_value=0.0,
                             step=1000.0,
                         ),
@@ -995,21 +1079,22 @@ if uploaded is not None:
 
                 for column in [
                     "company_size",
-                    "estimated_deal_value_usd",
+                    deal_editor_field,
                     "engagement_signal",
                 ]:
                     if column in enriched_view.columns:
                         source_df.loc[enriched_view.index, column] = enriched_view[column]
 
-                source_df["estimated_deal_value_usd"] = pd.to_numeric(
-                    source_df["estimated_deal_value_usd"],
+                source_df[deal_editor_field] = pd.to_numeric(
+                    source_df[deal_editor_field],
                     errors="coerce",
                 ).fillna(0)
 
                 source_df.loc[
-                    source_df["estimated_deal_value_usd"] > 0,
+                    source_df[deal_editor_field] > 0,
                     "deal_value_status",
                 ] = "verified"
+                source_df["deal_value_currency"] = deal_editor_currency
 
                 source_df.loc[
                     source_df["engagement_signal"]
