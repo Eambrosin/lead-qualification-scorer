@@ -58,13 +58,35 @@ def _first_numeric(row: pd.Series, fields: list[str]) -> float | None:
     return None
 
 
+DEAL_VALUE_FIELDS = [
+    ("estimated_deal_value_eur", "EUR"),
+    ("deal_value_eur", "EUR"),
+    ("estimated_deal_value_usd", "USD"),
+    ("deal_value_usd", "USD"),
+]
+
+
+def _deal_value_info(row: pd.Series) -> tuple[float, str, str]:
+    explicit_currency = _text(row.get("deal_value_currency")).upper()
+    for field, default_currency in DEAL_VALUE_FIELDS:
+        if field not in row.index:
+            continue
+        try:
+            value = float(row.get(field))
+        except Exception:
+            continue
+        if pd.notna(value) and value > 0:
+            currency = explicit_currency or default_currency
+            return value, currency, field
+    return 0.0, explicit_currency, ""
+
+
 def validate_integrated_dataframe(df: pd.DataFrame) -> None:
     required = {
         "company_name",
         "country",
         "region",
         "industry",
-        "estimated_deal_value_usd",
         "engagement_signal",
     }
     missing = required - set(df.columns)
@@ -76,20 +98,18 @@ def validate_integrated_dataframe(df: pd.DataFrame) -> None:
     if df.empty:
         raise ValueError("Input CSV contains no leads.")
 
-    numeric = pd.to_numeric(df["estimated_deal_value_usd"], errors="coerce")
-    known_mask = pd.Series(True, index=df.index)
-    if "deal_value_status" in df.columns:
-        known_mask = ~df["deal_value_status"].fillna("").astype(str).str.lower().isin(
-            {"", "unknown", "unverified", "not qualified", "not_qualified"}
-        )
-    invalid_known = known_mask & numeric.isna()
-    if invalid_known.any():
+    if not any(field in df.columns for field, _ in DEAL_VALUE_FIELDS):
         raise ValueError(
-            "Verified deal values must be numeric. Unknown deal values should use "
-            "deal_value_status='unknown'."
+            "Input CSV must include a deal-value column such as "
+            "estimated_deal_value_eur or estimated_deal_value_usd."
         )
-    if (numeric.fillna(0) < 0).any():
-        raise ValueError("estimated_deal_value_usd cannot contain negative values.")
+
+    for field, _ in DEAL_VALUE_FIELDS:
+        if field not in df.columns:
+            continue
+        numeric = pd.to_numeric(df[field], errors="coerce")
+        if (numeric.fillna(0) < 0).any():
+            raise ValueError(f"{field} cannot contain negative values.")
 
 
 def score_integrated_components(
@@ -140,10 +160,7 @@ def score_integrated_components(
         )
 
     deal_unknown = _unknown_status(row, "deal_value_status")
-    try:
-        deal_value = float(row.get("estimated_deal_value_usd"))
-    except Exception:
-        deal_value = 0.0
+    deal_value, _, _ = _deal_value_info(row)
 
     if deal_unknown or pd.isna(deal_value) or deal_value <= 0 or max_verified_deal_value <= 0:
         deal_value_score = None
@@ -299,15 +316,33 @@ def rank_integrated_leads(
     validate_integrated_dataframe(df)
     ranked = df.copy()
 
-    deal_values = pd.to_numeric(
-        ranked["estimated_deal_value_usd"],
-        errors="coerce",
-    ).fillna(0)
+    deal_infos = ranked.apply(_deal_value_info, axis=1)
+    deal_values = pd.Series(
+        [item[0] for item in deal_infos],
+        index=ranked.index,
+        dtype=float,
+    )
+    deal_currencies = pd.Series(
+        [item[1] for item in deal_infos],
+        index=ranked.index,
+        dtype=str,
+    )
 
     verified_mask = pd.Series(True, index=ranked.index)
     if "deal_value_status" in ranked.columns:
         verified_mask = ~ranked["deal_value_status"].fillna("").astype(str).str.lower().isin(
             {"", "unknown", "unverified", "not qualified", "not_qualified"}
+        )
+
+    verified_currency_set = {
+        currency
+        for currency in deal_currencies[verified_mask & (deal_values > 0)].tolist()
+        if currency
+    }
+    if len(verified_currency_set) > 1:
+        raise ValueError(
+            "Verified deal values contain multiple currencies. Normalize the pipeline "
+            "to one currency before comparative deal-value scoring."
         )
 
     verified_values = deal_values[verified_mask & (deal_values > 0)]
@@ -342,6 +377,17 @@ def rank_integrated_leads(
         else:
             qualification_status = "Research / Enrichment Required"
 
+        field_visit_completed = _text(row.get("field_visit_completed")).lower() in {
+            "true", "1", "yes", "y"
+        }
+        field_outcome = _text(row.get("field_outcome"))
+        field_next_action = _text(row.get("field_next_action"))
+
+        if field_visit_completed and field_outcome == "Not a fit":
+            qualification_status = "Field Feedback — Not Fit"
+        elif field_visit_completed and _text(row.get("engagement_status")).lower() == "verified":
+            qualification_status = "Field Qualified"
+
         action = _recommended_action(
             tier=tier,
             engagement_signal=_text(row.get("engagement_signal")).lower(),
@@ -350,10 +396,25 @@ def rank_integrated_leads(
             territory_status=_text(row.get("territory_status")),
         )
 
+        if field_visit_completed:
+            if field_outcome == "Not a fit":
+                action = "Field visit indicates no current fit — record the reason and deprioritize"
+            elif field_next_action:
+                action = f"Field-verified next step — {field_next_action}"
+            elif field_outcome:
+                action = f"Continue from field outcome: {field_outcome}"
+
+        rationale = _rationale(details)
+        if field_visit_completed:
+            rationale += (
+                f" | Field visit evidence: {field_outcome or 'completed'}"
+                + (f" | Agreed next step: {field_next_action}" if field_next_action else "")
+            )
+
         scores.append(score)
         tiers.append(tier)
         actions.append(action)
-        rationales.append(_rationale(details))
+        rationales.append(rationale)
         breakdowns.append(json.dumps(details, ensure_ascii=False))
         completeness_values.append(completeness)
         qualification_statuses.append(qualification_status)
@@ -365,6 +426,8 @@ def rank_integrated_leads(
     ranked["score_breakdown"] = breakdowns
     ranked["qualification_completeness"] = completeness_values
     ranked["qualification_status"] = qualification_statuses
+    ranked["deal_value_for_scoring"] = deal_values
+    ranked["deal_value_currency_for_scoring"] = deal_currencies
 
     return ranked.sort_values(
         ["score", "qualification_completeness"],

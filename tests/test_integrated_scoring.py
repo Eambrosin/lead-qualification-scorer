@@ -86,6 +86,67 @@ class IntegratedScoringTests(unittest.TestCase):
         self.assertEqual(ranked.iloc[0]["company_name"], "Clinic A")
         self.assertGreater(ranked.iloc[0]["score"], ranked.iloc[1]["score"])
 
+    def test_field_feedback_in_eur_becomes_field_qualified(self):
+        data = pd.DataFrame(
+            [{
+                "company_name": "Milano Clinic",
+                "country": "Italy",
+                "region": "EU",
+                "industry": "Medical Aesthetics",
+                "company_size": 20,
+                "estimated_deal_value_eur": 30000,
+                "deal_value_currency": "EUR",
+                "deal_value_status": "verified",
+                "engagement_signal": "hot",
+                "engagement_status": "verified",
+                "account_opportunity_score": 90,
+                "field_visit_completed": True,
+                "field_outcome": "Demo requested",
+                "field_next_action": "Schedule device demo",
+            }]
+        )
+
+        ranked = rank_integrated_leads(data, self._config())
+        row = ranked.iloc[0]
+
+        self.assertEqual(row["qualification_status"], "Field Qualified")
+        self.assertIn("Schedule device demo", row["recommended_action"])
+        self.assertEqual(row["deal_value_currency_for_scoring"], "EUR")
+        self.assertEqual(row["deal_value_for_scoring"], 30000)
+
+    def test_mixed_verified_currencies_require_normalization(self):
+        data = pd.DataFrame(
+            [
+                {
+                    "company_name": "EU Clinic",
+                    "country": "Italy",
+                    "region": "EU",
+                    "industry": "Medical Aesthetics",
+                    "company_size": 10,
+                    "estimated_deal_value_eur": 30000,
+                    "deal_value_status": "verified",
+                    "engagement_signal": "warm",
+                    "engagement_status": "verified",
+                    "account_opportunity_score": 80,
+                },
+                {
+                    "company_name": "US Clinic",
+                    "country": "United States",
+                    "region": "NA",
+                    "industry": "Medical Aesthetics",
+                    "company_size": 10,
+                    "estimated_deal_value_usd": 30000,
+                    "deal_value_status": "verified",
+                    "engagement_signal": "warm",
+                    "engagement_status": "verified",
+                    "account_opportunity_score": 80,
+                },
+            ]
+        )
+
+        with self.assertRaisesRegex(ValueError, "multiple currencies"):
+            rank_integrated_leads(data, self._config())
+
     def test_verified_commercial_fields_increase_qualification_completeness(self):
         base = {
             "company_name": "Example Clinic",
