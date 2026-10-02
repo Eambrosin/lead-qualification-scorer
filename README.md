@@ -7,6 +7,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
 ![Commercial Intelligence](https://img.shields.io/badge/Commercial%20Intelligence-PRIORITIZE-8250df)
 [![Python CI](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey)](LICENSE)
 
 A Commercial Intelligence application for qualifying and prioritizing opportunities using configurable ICP logic, transparent scoring, revenue context and evidence-aware next actions.
 
