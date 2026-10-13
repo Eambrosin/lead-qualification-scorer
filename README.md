@@ -2,6 +2,8 @@
 
 ### Configurable ICP Scoring | Explainable Commercial Intelligence | Revenue Prioritization
 
+**Operational focus:** Counterparty Qualification & Commercial Priority
+
 [![Live App](https://img.shields.io/badge/Live%20App-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://lead-qualification-scorer-eambrosin.streamlit.app/)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
@@ -9,7 +11,7 @@
 [![Python CI](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey)](LICENSE)
 
-A Commercial Intelligence application for qualifying and prioritizing opportunities using configurable ICP logic, transparent scoring, revenue context and evidence-aware next actions.
+A Commercial Intelligence application for qualifying and prioritizing buyers, partners and commercial opportunities inside a shared Commercial Mandate using configurable ICP logic, transparent scoring, revenue context and evidence-aware next actions.
 
 > **Prioritize with explainable commercial logic. Use AI to assist interpretation — not to silently decide which account matters most.**
 
@@ -38,7 +40,9 @@ The platform turns raw pipeline inputs into an explainable commercial priority q
 ## Commercial Workflow
 
 ```text
-ACCOUNT / LEAD INPUT
+COMMERCIAL MANDATE
+        ↓
+COUNTERPARTY INPUT
         ↓
 ICP FIT
         +
@@ -113,6 +117,18 @@ Adds optional interpretation and communication support after the deterministic q
 - CSV import / export
 - automated tests and GitHub Actions CI
 - full-history secret scanning
+
+---
+
+## Commercial Mandate Context
+
+When the pipeline comes from IDENTIFY, PRIORITIZE preserves the shared mandate context including commercial corridor, represented company, product, buyer / partner focus, route-to-market hypothesis and trade-feasibility status.
+
+The core question becomes:
+
+> **How relevant is this counterparty to this specific mandate, and what should happen next?**
+
+The score remains deterministic. Mandate context provides commercial meaning; it does not silently alter evidence or invent fit.
 
 ---
 
