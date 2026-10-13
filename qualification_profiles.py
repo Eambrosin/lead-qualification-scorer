@@ -23,10 +23,94 @@ QUALIFICATION_PROFILES = {
         },
         "note": "General configurable B2B qualification profile.",
     },
+    "Fotovoltaico — C&I Energy Consumers": {
+        "profile_id": "photovoltaic_energy_consumers",
+        "preferred_regions": ["EU"],
+        "preferred_industries": [
+            "Aziende ad Alto Consumo Energetico",
+            "Industrial Manufacturing",
+            "Food Manufacturing",
+            "Food & Beverage",
+            "Logistics",
+            "Hospitality",
+            "Healthcare",
+            "Data Centers",
+        ],
+        "min_company_size": 10,
+        "max_company_size": 10000,
+        "weights": {
+            "upstream_fit": 30,
+            "region": 10,
+            "industry": 20,
+            "company_size": 5,
+            "deal_value": 20,
+            "engagement": 15,
+        },
+        "note": (
+            "Qualification profile for commercial and industrial photovoltaic end customers. "
+            "Public energy-intensity signals support prioritization but do not establish "
+            "verified electricity consumption or technical feasibility."
+        ),
+    },
+    "Industrial Machinery — Brazil": {
+        "profile_id": "industrial_machinery_brazil",
+        "preferred_regions": ["LATAM"],
+        "preferred_industries": [
+            "Macchinari e Attrezzature Industriali",
+            "Industrial Manufacturing",
+            "Food Manufacturing",
+            "Beverage Manufacturing",
+            "Packaging",
+            "Pharmaceuticals",
+            "Chemicals",
+            "Metalworking",
+            "Automotive",
+        ],
+        "min_company_size": 20,
+        "max_company_size": 10000,
+        "weights": {
+            "upstream_fit": 30,
+            "region": 10,
+            "industry": 20,
+            "company_size": 5,
+            "deal_value": 20,
+            "engagement": 15,
+        },
+        "note": (
+            "Europe → Brazil machinery / equipment qualification profile. "
+            "Use the Commercial Mandate to define the exact machine, industrial application, "
+            "buyer type and route-to-market hypothesis."
+        ),
+    },
+    "Specialty Coffee — Europe": {
+        "profile_id": "specialty_coffee_europe",
+        "preferred_regions": ["EU"],
+        "preferred_industries": [
+            "Specialty Coffee",
+            "Coffee",
+            "Food & Beverage",
+            "Food Import",
+        ],
+        "min_company_size": 5,
+        "max_company_size": 5000,
+        "weights": {
+            "upstream_fit": 30,
+            "region": 10,
+            "industry": 20,
+            "company_size": 5,
+            "deal_value": 20,
+            "engagement": 15,
+        },
+        "note": (
+            "Brazil → Europe specialty-coffee qualification profile. "
+            "Quality, certifications, crop availability, logistics, pricing and actual "
+            "buyer interest remain qualification inputs."
+        ),
+    },
     "Medical Aesthetics — Clinics & Practitioners": {
         "profile_id": "medical_aesthetics",
         "preferred_regions": ["EU"],
-        "preferred_industries": ["Medical Aesthetics"],
+        "preferred_industries": ["Medicina Estetica", "Medical Aesthetics"],
         "min_company_size": 0,
         "max_company_size": 250,
         "weights": {
