@@ -9,6 +9,7 @@ from ai_insights import generate_ai_insight, generate_outreach
 from integrated_scoring import rank_integrated_leads
 from lead_qualifier import load_scoring_config
 from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
+from commercial_mandate import has_mandate_context, mandate_summary
 
 
 st.set_page_config(
@@ -898,6 +899,15 @@ if uploaded is not None:
                 ],
                 errors="coerce",
             )
+
+        if not source_df.empty:
+            mandate_row = source_df.iloc[0].to_dict()
+            if has_mandate_context(mandate_row):
+                st.info(
+                    "**Commercial Mandate:** "
+                    + mandate_summary(mandate_row)
+                    + "  \\nQualification and priority are evaluated in the context of this mandate."
+                )
 
         # Backward-compatible repair for older IDENTIFY handoffs.
         # New exports already provide these fields explicitly.
@@ -2652,7 +2662,7 @@ if uploaded is not None:
 
     st.link_button(
         "Open ENGAGE — Adaptive Outreach",
-        "https://outreach-sequence-generator-7dcmglcxfnmszlodg8lqre.streamlit.app/",
+        "https://outreach-sequence-generator-eambrosin.streamlit.app/",
         use_container_width=True,
     )
 
