@@ -13,7 +13,7 @@ from commercial_mandate import has_mandate_context, mandate_summary
 
 
 st.set_page_config(
-    page_title="AI Lead Qualification & Revenue Prioritization",
+    page_title="Counterparty Qualification & Commercial Priority",
     page_icon="🚀",
     layout="wide",
 )
@@ -523,12 +523,12 @@ def get_highest_risk_account(df):
 
 
 st.title(
-    "🚀 AI Lead Qualification & Revenue Prioritization"
+    "🚀 Counterparty Qualification & Commercial Priority"
 )
 
 st.caption(
-    "Configure your Ideal Customer Profile, rank commercial opportunities, "
-    "understand every score and generate AI-assisted account intelligence."
+    "Qualify buyers and partners in the context of a Commercial Mandate, "
+    "prioritize commercial attention and preserve explainable next actions."
 )
 
 
@@ -908,6 +908,19 @@ if uploaded is not None:
                     + mandate_summary(mandate_row)
                     + "  \\nQualification and priority are evaluated in the context of this mandate."
                 )
+                trade_status = clean_optional_text(
+                    mandate_row.get("trade_feasibility_status", "")
+                )
+                tariff_status = clean_optional_text(
+                    mandate_row.get("trade_tariff_scenario_status", "")
+                )
+                if trade_status or tariff_status:
+                    st.caption(
+                        "Trade / market-entry feasibility: "
+                        + (trade_status or "Unknown")
+                        + " · Tariff scenario: "
+                        + (tariff_status or "Unknown")
+                    )
 
         # Backward-compatible repair for older IDENTIFY handoffs.
         # New exports already provide these fields explicitly.
@@ -1824,7 +1837,7 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.subheader(
-        "🏆 Top 5 Leads"
+        "🏆 Top 5 Counterparties"
     )
 
     top_columns = [
@@ -1888,7 +1901,7 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.subheader(
-        "🤖 Lead Intelligence & Outreach"
+        "🤖 Counterparty Intelligence"
     )
 
     st.caption(
@@ -1897,7 +1910,7 @@ if uploaded is not None:
     )
 
     selected_company = st.selectbox(
-        "Select a lead",
+        "Select a counterparty",
         df[
             "company_name"
         ].tolist(),
@@ -1967,7 +1980,7 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.markdown(
-        "### 🧩 Lead Intelligence Workspace"
+        "### 🧩 Counterparty Intelligence Workspace"
     )
 
     st.caption(
