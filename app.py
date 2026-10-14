@@ -9,7 +9,12 @@ from ai_insights import generate_ai_insight, generate_outreach
 from integrated_scoring import rank_integrated_leads
 from lead_qualifier import load_scoring_config
 from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
-from commercial_mandate import has_mandate_context, mandate_summary
+from commercial_mandate import (
+    apply_mandate_fields,
+    has_mandate_context,
+    mandate_from_json,
+    mandate_summary,
+)
 
 
 st.set_page_config(
@@ -860,6 +865,24 @@ with st.sidebar:
         )
 
 
+mandate_file = st.file_uploader(
+    "Optional Commercial Mandate JSON",
+    type=["json"],
+    key="commercial_mandate_json",
+    help=(
+        "Load the same mandate created in IDENTIFY. When supplied, this context "
+        "is applied to the uploaded pipeline before qualification."
+    ),
+)
+mandate_override = {}
+if mandate_file is not None:
+    try:
+        mandate_override = mandate_from_json(mandate_file.getvalue())
+        st.success("Commercial Mandate loaded and ready to apply.")
+    except Exception as exc:
+        st.error(f"Could not load Commercial Mandate: {exc}")
+
+
 uploaded = st.file_uploader(
     "Upload Pipeline CSV",
     type=["csv"],
@@ -878,6 +901,12 @@ if uploaded is not None:
         source_df = pd.read_csv(
             uploaded
         )
+
+        if mandate_override:
+            source_df = apply_mandate_fields(
+                source_df,
+                mandate_override,
+            )
 
         for deal_field, _ in DEAL_VALUE_FIELDS:
             if deal_field in source_df.columns:
