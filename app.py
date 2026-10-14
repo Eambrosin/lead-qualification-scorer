@@ -2049,6 +2049,12 @@ if uploaded is not None:
             f"{selected_row['industry']}"
         )
 
+        if str(selected_row.get("counterparty_role", "")).strip():
+            st.write(
+                f"**Counterparty Role:** "
+                f"{selected_row.get('counterparty_role', '')}"
+            )
+
         if (
             "company_size"
             in selected_row.index
