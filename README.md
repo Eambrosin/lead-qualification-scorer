@@ -122,7 +122,7 @@ Adds optional interpretation and communication support after the deterministic q
 
 ## Commercial Mandate Context
 
-When the pipeline comes from IDENTIFY, PRIORITIZE preserves the shared mandate context including commercial corridor, represented company, product, buyer / partner focus, route-to-market hypothesis and trade-feasibility status.
+When the pipeline comes from IDENTIFY, PRIORITIZE preserves the shared mandate context including commercial corridor, represented company, product, buyer / partner focus, route-to-market hypothesis and trade-feasibility status. A portable Commercial Mandate JSON can also be loaded separately and applied to an uploaded pipeline.
 
 The core question becomes:
 
