@@ -105,6 +105,7 @@ Adds optional interpretation and communication support after the deterministic q
 - reusable ICP presets
 - weighted commercial scoring
 - explainable score breakdown
+- shared Ambrosin Mandate Workspace navigation
 - buyer / partner counterparty context
 - counterparty priority tiers
 - revenue-prioritization context
