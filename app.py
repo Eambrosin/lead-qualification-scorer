@@ -1191,7 +1191,7 @@ if uploaded is not None:
     )
 
     col1.metric(
-        "Total Leads",
+        "Total Counterparties",
         len(df),
     )
 
@@ -1234,7 +1234,7 @@ if uploaded is not None:
     )
 
     col4.metric(
-        "Tier A Leads",
+        "Tier A Counterparties",
         len(
             df[
                 df["tier"]
@@ -1749,7 +1749,7 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.subheader(
-        "🎯 Multi-Lead Prioritization Engine"
+        "🎯 Multi-Counterparty Prioritization Engine"
     )
 
     st.caption(
@@ -1969,7 +1969,7 @@ if uploaded is not None:
     ) = st.columns(4)
 
     col_profile_1.metric(
-        "Selected Lead",
+        "Selected Counterparty",
         selected_row[
             "company_name"
         ],
@@ -2223,7 +2223,7 @@ if uploaded is not None:
         )
 
         st.write(
-            f"**Lead Score:** "
+            f"**Commercial Priority Score:** "
             f"{selected_row['score']}"
         )
 
@@ -2420,7 +2420,7 @@ if uploaded is not None:
     with interpretation_col_1:
 
         st.markdown(
-            "**Why This Lead Matters**"
+            "**Why This Counterparty Matters**"
         )
 
         st.write(
@@ -2559,7 +2559,7 @@ if uploaded is not None:
     # ------------------------------------------------------------------
 
     st.subheader(
-        "⭐ Lead Scores"
+        "⭐ Counterparty Scores"
     )
 
     fig_scores = px.bar(
@@ -2567,7 +2567,7 @@ if uploaded is not None:
         x="company_name",
         y="score",
         color="tier",
-        title="Lead Ranking by Score",
+        title="Counterparty Ranking by Score",
     )
 
     st.plotly_chart(
@@ -2590,7 +2590,7 @@ if uploaded is not None:
                 df,
                 names="industry",
                 title=(
-                    "Leads by Industry"
+                    "Counterparties by Industry"
                 ),
             )
         )
@@ -2644,7 +2644,7 @@ if uploaded is not None:
     st.divider()
 
     st.subheader(
-        "🌍 Leads by Country"
+        "🌍 Counterparties by Country"
     )
 
     country_df = (
@@ -2666,7 +2666,7 @@ if uploaded is not None:
             x="country",
             y="count",
             title=(
-                "Leads by Country"
+                "Counterparties by Country"
             ),
         )
     )
@@ -2732,9 +2732,9 @@ if uploaded is not None:
     )
 
     st.download_button(
-        "⬇ Download Ranked Leads CSV",
+        "⬇ Download Ranked Counterparties CSV",
         csv,
-        "ranked_leads.csv",
+        "ranked_counterparties.csv",
         "text/csv",
     )
 
