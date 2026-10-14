@@ -105,7 +105,8 @@ Adds optional interpretation and communication support after the deterministic q
 - reusable ICP presets
 - weighted commercial scoring
 - explainable score breakdown
-- lead / account priority tiers
+- buyer / partner counterparty context
+- counterparty priority tiers
 - revenue-prioritization context
 - multi-lead ranking
 - executive account dashboard
@@ -190,6 +191,8 @@ Qualified context can be handed downstream to the Adaptive Outreach Intelligence
 Useful handoff fields include:
 
 - company / account identity
+- counterparty role where available
+- Commercial Mandate context
 - commercial priority
 - score rationale
 - fit summary
