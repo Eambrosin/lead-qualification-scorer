@@ -19,6 +19,24 @@ A Commercial Intelligence application for qualifying and prioritizing buyers, pa
 
 ---
 
+## Ambrosin Mandate Workspace
+
+PRIORITIZE operates inside the shared **Commercial Mandate Workspace**.
+
+A Commercial Mandate can be loaded directly as JSON or inherited from an IDENTIFY pipeline. The app keeps client, corridor, product, target market and commercial objective visible while qualification and priority logic are applied.
+
+Recommended progression:
+
+```text
+IDENTIFY
+    ↓
+PRIORITIZE
+    ↓
+ENGAGE
+```
+
+---
+
 ## Business Problem
 
 Commercial teams often have more leads than they can work effectively.
