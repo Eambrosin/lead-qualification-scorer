@@ -9,6 +9,7 @@ from ai_insights import generate_ai_insight, generate_outreach
 from integrated_scoring import rank_integrated_leads
 from lead_qualifier import load_scoring_config
 from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
+from mandate_workspace import render_mandate_workspace
 from commercial_mandate import (
     apply_mandate_fields,
     has_mandate_context,
@@ -882,6 +883,12 @@ if mandate_file is not None:
     except Exception as exc:
         st.error(f"Could not load Commercial Mandate: {exc}")
 
+
+render_mandate_workspace(
+    st,
+    "PRIORITIZE",
+    mandate_override,
+)
 
 uploaded = st.file_uploader(
     "Upload Pipeline CSV",
