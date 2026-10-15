@@ -535,7 +535,8 @@ st.title(
 
 st.caption(
     "Qualify buyers and partners in the context of a Commercial Mandate, "
-    "prioritize commercial attention and preserve explainable next actions."
+    "prioritize commercial attention and preserve explainable next actions. "
+    "Qualified buyers progress to ENGAGE; route-to-market partner candidates progress to PARTNER."
 )
 
 
