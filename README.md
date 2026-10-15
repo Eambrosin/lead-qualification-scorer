@@ -106,41 +106,7 @@ The current live interface is organized around:
 6. **Explainable Prioritization** — review weighted scoring, tiering, rationale, gaps and next actions.
 7. **Downstream Handoff** — move qualified buyers to ENGAGE and partner candidates to PARTNER.
 
-The live interface is the source of truth for the current Workspace shell; existing screenshots focus on the underlying analytical views.
-
 ---
-
-## Product Preview
-
-### 1. Executive Commercial Intelligence
-
-![Executive Summary](screenshots/v2-executive-summary.png)
-
-A concise view of pipeline quality, priority distribution and commercial concentration.
-
-### 2. Multi-Lead Prioritization Engine
-
-![Prioritization Engine](screenshots/v2-prioritization-engine.png)
-
-Ranks opportunities using configurable ICP and commercial criteria while preserving the score breakdown.
-
-### 3. Explainable Commercial Score
-
-![Explainable Score](screenshots/v2-explainable-score.png)
-
-Shows how each factor contributes to the total score so users can challenge or adjust the logic.
-
-### 4. Executive Account Dashboard
-
-![Executive Dashboard](screenshots/v2-executive-dashboard.png)
-
-Combines company context, revenue potential, fit and recommended action in one account view.
-
-### 5. AI-Assisted Account Intelligence
-
-![AI Intelligence](screenshots/v2-ai-intelligence.png)
-
-Adds optional interpretation and communication support after the deterministic qualification layer.
 
 ---
 
