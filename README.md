@@ -9,6 +9,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
 ![Commercial Intelligence](https://img.shields.io/badge/Commercial%20Intelligence-PRIORITIZE-8250df)
 [![Python CI](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml/badge.svg)](https://github.com/Eambrosin/lead-qualification-scorer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/badge/Release-v3.0.0-success)](https://github.com/Eambrosin/lead-qualification-scorer/releases/tag/v3.0.0)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey)](LICENSE)
 
 A Commercial Intelligence application for qualifying and prioritizing buyers, partners and commercial opportunities inside a shared Commercial Mandate using configurable ICP logic, transparent scoring, revenue context and evidence-aware next actions.
@@ -283,23 +284,31 @@ Optional AI features require the relevant API key in environment variables or St
 
 ## Current Version
 
-**Main branch — Workspace-enabled PRIORITIZE**
+**v3.0.0 — Counterparty Qualification & Commercial Priority**
 
-The tagged v2 release established configurable qualification and explainable scoring. The current main branch adds:
+Version 3.0 is the current stable release of PRIORITIZE. It moves the application beyond generic lead scoring into mandate-aware counterparty qualification and role-aware commercial routing.
+
+Key release capabilities include:
 
 - shared private Commercial Mandate persistence
 - automatic `mandate_id` restoration
-- mandate display before pipeline upload
-- buyer / partner role-aware progression
-- protected cross-app handoff
-- compatibility with IDENTIFY exports and downstream PARTNER / ENGAGE execution
+- active mandate visible before pipeline upload
+- configurable and explainable ICP scoring
+- qualification / readiness context
+- deterministic commercial priority tiers
+- buyer → ENGAGE progression
+- partner → PARTNER → ENGAGE progression
+- mixed-mandate support
+- optional AI-assisted interpretation without AI-determined scoring
 
-The main branch therefore extends the tagged release without presenting a new release number that has not been published.
+**[View v3.0.0 Release](https://github.com/Eambrosin/lead-qualification-scorer/releases/tag/v3.0.0)**  
+[Release Notes](docs/RELEASE_NOTES_v3.0.0.md)
 
 ---
 
 ## Documentation
 
+- [v3.0.0 Release Notes](docs/RELEASE_NOTES_v3.0.0.md)
 - [Detailed Technical Reference](docs/TECHNICAL_REFERENCE.md)
 - [Tests](tests/)
 - [Commercial Intelligence Portfolio](https://github.com/Eambrosin)
