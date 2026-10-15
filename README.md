@@ -1,6 +1,6 @@
-# Lead Qualification & Revenue Prioritization Platform
+# Counterparty Qualification & Commercial Priority
 
-### Configurable ICP Scoring | Explainable Commercial Intelligence | Revenue Prioritization
+### Mandate-Aware ICP Scoring | Explainable Prioritization | Buyer & Partner Routing
 
 **Operational focus:** Counterparty Qualification & Commercial Priority
 
@@ -19,21 +19,31 @@ A Commercial Intelligence application for qualifying and prioritizing buyers, pa
 
 ---
 
-## Ambrosin Mandate Workspace
+
+## Ambrosin Commercial Mandate Workspace
 
 PRIORITIZE operates inside the shared **Commercial Mandate Workspace**.
 
-A Commercial Mandate can be inherited from an IDENTIFY pipeline, loaded as portable JSON, or resolved automatically from the shared private workspace. When a saved mandate is opened from another module, the navigation carries only its opaque **mandate_id**; after Private Workspace Access is granted, PRIORITIZE restores the canonical client, corridor, product, target market and commercial objective before qualification logic is applied.
+A saved mandate can be selected directly in the app or opened automatically from IDENTIFY through an opaque **mandate_id**. After **Private Workspace Access** is granted, the app restores the canonical client, corridor, product, target market and counterparty focus from the private Supabase-backed workspace. Portable JSON remains available as an optional override / fallback.
 
-Recommended progression:
+The mandate is visible **before a pipeline CSV is uploaded**, so qualification always starts with the commercial context already in view.
+
+Progression is role-aware:
 
 ```text
-IDENTIFY
-    ↓
-PRIORITIZE
-    ↓
-ENGAGE
+BUYERS
+IDENTIFY → PRIORITIZE → ENGAGE
+
+PARTNERS
+IDENTIFY → PRIORITIZE → PARTNER → ENGAGE
+
+BUYERS + PARTNERS
+IDENTIFY → PRIORITIZE
+                    ├─ qualified buyers → ENGAGE
+                    └─ partner candidates → PARTNER → ENGAGE
 ```
+
+The app does not force every counterparty into the same downstream path.
 
 ---
 
@@ -55,31 +65,48 @@ The platform turns raw pipeline inputs into an explainable commercial priority q
 
 ---
 
+
 ## Commercial Workflow
 
 ```text
 COMMERCIAL MANDATE
         ↓
-COUNTERPARTY INPUT
+PIPELINE / IDENTIFY HANDOFF
         ↓
-ICP FIT
+ICP + UPSTREAM FIT
         +
-COMMERCIAL SIGNALS
+REGION / INDUSTRY / COMPANY SIZE
         +
-REVENUE CONTEXT
+COMMERCIAL VALUE / ENGAGEMENT
         ↓
 EXPLAINABLE SCORE
         ↓
 PRIORITY TIER
+        +
+QUALIFICATION CONTEXT
         ↓
-ACCOUNT INTELLIGENCE
-        ↓
-RECOMMENDED ACTION
-        ↓
-ENGAGE HANDOFF
+ROLE-AWARE NEXT ACTION
+        ├─ BUYER → ENGAGE
+        └─ PARTNER → PARTNER → ENGAGE
 ```
 
-The objective is not simply to create a number. It is to make the reason behind prioritization visible and actionable.
+The objective is not simply to create a number. It is to make **why the account matters, what is still unknown and where it should go next** visible and actionable.
+
+---
+
+## Current Interface
+
+The current live interface is organized around:
+
+1. **ICP & Scoring** — configure preset, priority regions / industries, company-size range, weights and tier thresholds.
+2. **AI Settings** — optional interpretation layer; deterministic scoring remains fully operational without an API key.
+3. **Saved Commercial Mandate** — restore the mandate from the shared private workspace.
+4. **Commercial Mandate Workspace** — view the active mandate, current stage and role-aware progression.
+5. **Pipeline Upload** — load an IDENTIFY export or another compatible qualification CSV.
+6. **Explainable Prioritization** — review weighted scoring, tiering, rationale, gaps and next actions.
+7. **Downstream Handoff** — move qualified buyers to ENGAGE and partner candidates to PARTNER.
+
+The live interface is the source of truth for the current Workspace shell; existing screenshots focus on the underlying analytical views.
 
 ---
 
@@ -133,7 +160,7 @@ Adds optional interpretation and communication support after the deterministic q
 - evidence-aware research readiness
 - recommended next action
 - optional AI-assisted account intelligence
-- downstream ENGAGE handoff
+- role-aware downstream routing to ENGAGE or PARTNER
 - CSV import / export
 - automated tests and GitHub Actions CI
 - full-history secret scanning
@@ -203,16 +230,17 @@ Every score should be explainable back to observable or explicitly supplied inpu
 
 ---
 
-## PRIORITIZE → ENGAGE
 
-Qualified context can be handed downstream to the Adaptive Outreach Intelligence application.
+## PRIORITIZE → ENGAGE / PARTNER
 
-Useful handoff fields include:
+PRIORITIZE preserves the same Commercial Mandate while determining what should happen next.
+
+Useful handoff context includes:
 
 - company / account identity
-- counterparty role where available
+- counterparty role
 - Commercial Mandate context
-- commercial priority
+- commercial priority and tier
 - score rationale
 - fit summary
 - revenue context
@@ -221,27 +249,35 @@ Useful handoff fields include:
 - available public contact context
 - language / region context where available
 
-**ENGAGE:** [Adaptive Outreach Intelligence](https://github.com/Eambrosin/outreach-sequence-generator)
+**Buyer / end-customer candidates** progress to **ENGAGE** when commercially ready.
+
+**Route-to-market / partner candidates** progress to **PARTNER** for market-access and execution-feasibility assessment before ENGAGE.
+
+**ENGAGE:** [Business Development Execution & Outreach](https://github.com/Eambrosin/outreach-sequence-generator)  
+**PARTNER:** [Route-to-Market & Partner Intelligence](https://github.com/Eambrosin/partnership-opportunity-finder)
 
 ---
+
 
 ## Architecture
 
 ```text
 app.py
   ↓
+commercial_mandate.py
+  ↓
+workspace_persistence.py / mandate_workspace.py
+  ↓
 qualification_profiles.py
   ↓
-lead_qualifier.py
-  ↓
-integrated_scoring.py
+lead_qualifier.py / integrated_scoring.py
   ↓
 ai_insights.py
   ↓
-CSV / ENGAGE handoff
+ENGAGE / PARTNER handoff
 ```
 
-The deterministic scoring layer remains separate from optional AI assistance.
+Commercial scoring remains deterministic and inspectable. Shared workspace persistence restores context; optional AI assists interpretation without replacing the scoring model.
 
 ---
 
@@ -278,13 +314,21 @@ Optional AI features require the relevant API key in environment variables or St
 
 ---
 
+
 ## Current Version
 
-**v2.0.0 — Configurable Commercial Intelligence**
+**Main branch — Workspace-enabled PRIORITIZE**
 
-The current release introduced configurable qualification profiles, integrated commercial scoring, stronger explainability and a more executive account workspace.
+The tagged v2 release established configurable qualification and explainable scoring. The current main branch adds:
 
-[View Release](https://github.com/Eambrosin/lead-qualification-scorer/releases/tag/v2.0.0)
+- shared private Commercial Mandate persistence
+- automatic `mandate_id` restoration
+- mandate display before pipeline upload
+- buyer / partner role-aware progression
+- protected cross-app handoff
+- compatibility with IDENTIFY exports and downstream PARTNER / ENGAGE execution
+
+The main branch therefore extends the tagged release without presenting a new release number that has not been published.
 
 ---
 
