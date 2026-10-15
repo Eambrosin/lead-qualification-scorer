@@ -10,6 +10,7 @@ from integrated_scoring import rank_integrated_leads
 from lead_qualifier import load_scoring_config
 from qualification_profiles import QUALIFICATION_PROFILES, get_qualification_profile
 from mandate_workspace import render_mandate_workspace
+from workspace_persistence import load_saved_mandate, render_save_control
 from commercial_mandate import (
     apply_mandate_fields,
     has_mandate_context,
@@ -866,6 +867,8 @@ with st.sidebar:
         )
 
 
+cloud_mandate = load_saved_mandate(st, key_prefix="prioritize")
+
 mandate_file = st.file_uploader(
     "Optional Commercial Mandate JSON",
     type=["json"],
@@ -875,7 +878,7 @@ mandate_file = st.file_uploader(
         "is applied to the uploaded pipeline before qualification."
     ),
 )
-mandate_override = {}
+mandate_override = dict(cloud_mandate)
 if mandate_file is not None:
     try:
         mandate_override = mandate_from_json(mandate_file.getvalue())
@@ -917,6 +920,14 @@ if uploaded is not None:
                 else {}
             )
         )
+        workspace_mandate = render_save_control(
+            st,
+            workspace_mandate,
+            source_stage="PRIORITIZE",
+            key_prefix="prioritize",
+        )
+        if has_mandate_context(workspace_mandate):
+            source_df = apply_mandate_fields(source_df, workspace_mandate)
         render_mandate_workspace(
             st,
             "PRIORITIZE",
