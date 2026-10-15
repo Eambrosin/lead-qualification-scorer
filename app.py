@@ -886,6 +886,19 @@ if mandate_file is not None:
     except Exception as exc:
         st.error(f"Could not load Commercial Mandate: {exc}")
 
+if mandate_override:
+    render_mandate_workspace(
+        st,
+        "PRIORITIZE",
+        mandate_override,
+    )
+    if has_mandate_context(mandate_override):
+        st.info(
+            "**Commercial Mandate:** "
+            + mandate_summary(mandate_override)
+            + "  \nThis context will be applied automatically when a pipeline CSV is uploaded."
+        )
+
 
 uploaded = st.file_uploader(
     "Upload Pipeline CSV",
@@ -928,11 +941,12 @@ if uploaded is not None:
         )
         if has_mandate_context(workspace_mandate):
             source_df = apply_mandate_fields(source_df, workspace_mandate)
-        render_mandate_workspace(
-            st,
-            "PRIORITIZE",
-            workspace_mandate,
-        )
+        if not mandate_override:
+            render_mandate_workspace(
+                st,
+                "PRIORITIZE",
+                workspace_mandate,
+            )
 
         for deal_field, _ in DEAL_VALUE_FIELDS:
             if deal_field in source_df.columns:
