@@ -23,7 +23,7 @@ A Commercial Intelligence application for qualifying and prioritizing buyers, pa
 
 PRIORITIZE operates inside the shared **Commercial Mandate Workspace**.
 
-A Commercial Mandate can be loaded directly as JSON or inherited from an IDENTIFY pipeline. The app keeps client, corridor, product, target market and commercial objective visible while qualification and priority logic are applied.
+A Commercial Mandate can be inherited from an IDENTIFY pipeline, loaded as portable JSON, or resolved automatically from the shared private workspace. When a saved mandate is opened from another module, the navigation carries only its opaque **mandate_id**; after Private Workspace Access is granted, PRIORITIZE restores the canonical client, corridor, product, target market and commercial objective before qualification logic is applied.
 
 Recommended progression:
 
