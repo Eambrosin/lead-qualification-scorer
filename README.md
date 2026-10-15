@@ -337,8 +337,8 @@ IDENTIFY → PRIORITIZE → ENGAGE
 IDENTIFY / Partner Universe → PARTNER → ENGAGE
 ```
 
-**IDENTIFY:** [Opportunity Discovery Intelligence](https://github.com/Eambrosin/opportunity-discovery-intelligence)  
-**ENGAGE:** [Adaptive Outreach Intelligence](https://github.com/Eambrosin/outreach-sequence-generator)  
+**IDENTIFY:** [Market Entry & Opportunity Intelligence](https://github.com/Eambrosin/opportunity-discovery-intelligence)  
+**ENGAGE:** [Business Development Execution & Outreach](https://github.com/Eambrosin/outreach-sequence-generator)  
 **Portfolio:** [github.com/Eambrosin](https://github.com/Eambrosin)
 
 ---
